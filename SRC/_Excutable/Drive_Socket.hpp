@@ -297,7 +297,8 @@ public:
     template <typename _Tp>
     int Inject(_Tp *data, int dataSize) //data size >= 15 char
     {
-        if (write(m_sock, data, dataSize) < 0)
+        int writed = write(m_sock, data, dataSize);
+        if (writed != dataSize)
         {
 #ifdef NETDEBUG
             perror("\033[31m[SocketInfo]IllegalSocket write error with\033[0m");
@@ -309,7 +310,7 @@ public:
             perror("\033[32m[SocketInfo]IllegalSocket write with\033[0m");
 #endif
         }
-        return 0;
+        return writed;
     }
 
     template <typename _Tp>

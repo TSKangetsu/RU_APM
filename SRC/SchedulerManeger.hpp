@@ -13,7 +13,7 @@
 
 #include "./RPiSingleAPM/src/_thirdparty/FlowController.hpp"
 
-#define FileConfigTarget "/boot/APSconfig.json"
+#define FileConfigTarget "/etc/APSconfig.json"
 #define IsServerSiteEnable true
 #define IsClientSiteEnable false
 #define FlowExchangeHZ 250.f

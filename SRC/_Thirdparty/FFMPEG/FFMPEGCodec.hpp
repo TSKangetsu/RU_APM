@@ -110,7 +110,7 @@ FFMPEGTools::FFMPEGCodec::FFMPEGCodec(FFMPEGOption optionI)
 #endif
 
     _FFMPEOption = optionI;
-    AVCD.EncoderBase = avcodec_find_encoder(_FFMPEOption.OutputFormat);
+    AVCD.EncoderBase = (AVCodec *)avcodec_find_encoder(_FFMPEOption.OutputFormat);
     AVCD.Encoder = avcodec_alloc_context3(AVCD.EncoderBase);
     AVCD.Encoder->codec_tag = 0;
     AVCD.Encoder->codec_id = _FFMPEOption.OutputFormat;
@@ -202,11 +202,12 @@ FFMPEGTools::FFMPEGCodec::~FFMPEGCodec()
 FFMPEGTools::FFMPEGDecodec::FFMPEGDecodec()
 {
     av_log_set_level(AV_LOG_SKIP_REPEATED);
-    AVCD.DecoderBase = avcodec_find_decoder(AV_CODEC_ID_H264);
+    AVCD.DecoderBase = (AVCodec *)avcodec_find_decoder(AV_CODEC_ID_H264);
     AVCD.Decoder = avcodec_alloc_context3(AVCD.DecoderBase);
     AVCD.DecodeParser = av_parser_init(AV_CODEC_ID_H264);
     if (AVCD.DecoderBase->capabilities & AV_CODEC_CAP_TRUNCATED)
         AVCD.DecodeParser->flags |= AV_CODEC_FLAG_TRUNCATED;
+    AVCD.DecodeParser->flags |= AV_CODEC_FLAG_INTERLACED_DCT;
     //
     avcodec_open2(AVCD.Decoder, AVCD.DecoderBase, NULL);
     //
@@ -219,23 +220,26 @@ int FFMPEGTools::FFMPEGDecodec::FFMPEGDecodecInsert(uint8_t *data, int size)
 {
     uint8_t *dataParsed = NULL;
     int sizeParsed = 0;
-    int len = av_parser_parse2(AVCD.DecodeParser, AVCD.Decoder, &dataParsed, &sizeParsed, data, size, 0, 0, AV_NOPTS_VALUE);
+    // int len = av_parser_parse2(AVCD.DecodeParser, AVCD.Decoder, &dataParsed, &sizeParsed, data, size, 0, 0, AV_NOPTS_VALUE);
 
-    if (sizeParsed > 0)
-    {
-        AVCD.Packet.data = dataParsed;
-        AVCD.Packet.size = sizeParsed;
-        //
-        AVPacket flushPacket;
-        av_init_packet(&flushPacket);
-        avcodec_send_packet(AVCD.Decoder, &flushPacket);
-        //
-        return avcodec_send_packet(AVCD.Decoder, &AVCD.Packet);
-    }
-    else
-    {
-        return -1;
-    }
+    // std::cout << " \n <-------------------------------------------------------------------------------------------> size parsed:" << sizeParsed << "\n";
+    // if (sizeParsed > 0)
+    // {
+    // AVCD.Packet.data = dataParsed;
+    // AVCD.Packet.size = sizeParsed;
+    AVCD.Packet.data = data;
+    AVCD.Packet.size = size;
+
+    // AVPacket flushPacket;
+    // av_init_packet(&flushPacket);
+    // avcodec_send_packet(AVCD.Decoder, &flushPacket);
+
+    return avcodec_send_packet(AVCD.Decoder, &AVCD.Packet);
+    // }
+    // else
+    // {
+    //     return -1;
+    // }
 };
 
 FFMPEGTools::AVData FFMPEGTools::FFMPEGDecodec::FFMPEGDecodecGetFrame()
