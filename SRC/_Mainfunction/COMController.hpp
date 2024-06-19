@@ -10,6 +10,8 @@
 #include "../_Thirdparty/FFMPEG/FFMPEGCodec.hpp"
 #endif
 
+#include "../_Excutable/CameraDrive/Drive_V4L2Reader.hpp"
+
 #ifdef MODULE_FECLIB
 #endif
 
@@ -58,6 +60,8 @@ private:
     std::queue<FFMPEGTools::AVData> EncoderQueue;
     std::unique_ptr<FFMPEGTools::FFMPEGCodec> Encoder;
 #endif
+    //
+    std::unique_ptr<V4L2Tools::V4L2Encoder> V4L2Enc;
 };
 
 COMController_t::COMController_t()
@@ -83,6 +87,21 @@ COMController_t::COMController_t()
                     .TargetFormat = targetOption,
                 }));
 #endif
+
+                V4L2Enc.reset(new V4L2Tools::V4L2Encoder(
+                    "/dev/video11",
+                    {
+                        .ImgWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
+                        .ImgHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
+                        .FrameRate = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
+                        .FrameBuffer = MAXV4LBUF,
+                        .Is_AutoSize = (SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth < 0),
+                        .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceIFormat),
+                        .H264_PSize = SYSC::CommonConfig.COM_BroadCastPFrameSize,
+                        .H264_Profile = V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE,
+                        .H264_Bitrate = SYSC::CommonConfig.COM_BroadCastBitRate,
+                        .H264_EnablePPS = true,
+                    }));
             }
             else
             {
@@ -103,6 +122,7 @@ COMController_t::COMController_t()
                 {
                     // Step 0. Target Video data
                     V4L2Tools::V4l2Data data;
+                    V4L2Tools::V4l2Data dataOut;
                     size_t InjectVSize = 0;
                     std::shared_ptr<uint8_t> InjectVTarget;
                     // Step 1. Read From uorb
@@ -118,13 +138,22 @@ COMController_t::COMController_t()
                             FrameFECSyncID++;
                             FrameFECSyncID = FrameFECSyncID == 0xff ? 0 : FrameFECSyncID;
 
-                            InjectVSize = data.size;
-                            InjectVTarget.reset(new uint8_t[data.size + 1]);
+                            InjectVSize = data.size + 1 + 4;
+                            InjectVTarget.reset(new uint8_t[InjectVSize]);
 
                             InjectVTarget.get()[0] = FrameFECSyncID;
                             std::copy(data.data, data.data + data.size, InjectVTarget.get() + 1);
-                            Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
+                            // TODO: add CRC check
+                            uint32_t table[256];
+                            crc32::generate_table(table);
+                            uint32_t crc = crc32::update(table, 0, (const void *)InjectVTarget.get(), InjectVSize - 4);
+                            // std::cout<< std::hex << crc << "\n";
+                            InjectVTarget.get()[InjectVSize - 4] = (uint8_t)(crc);
+                            InjectVTarget.get()[InjectVSize - 3] = (uint8_t)(crc >> 8);
+                            InjectVTarget.get()[InjectVSize - 2] = (uint8_t)(crc >> 16);
+                            InjectVTarget.get()[InjectVSize - 1] = (uint8_t)(crc >> 24);
                             // TODO: add EFC data frame on COM_CastFrameIndex + 1
+                            Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
                         }
                         else
                         {
@@ -154,6 +183,30 @@ COMController_t::COMController_t()
                                 // TODO: add EFC data frame on COM_CastFrameIndex + 1
                                 Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
                             }
+#else
+                            // TODO: V4L2ENC support
+                            V4L2Enc->V4L2EncodeSet(data, dataOut);
+
+                            FrameFECSyncID++;
+                            FrameFECSyncID = FrameFECSyncID == 0xff ? 0 : FrameFECSyncID;
+
+                            InjectVSize = dataOut.size + 1 + 4;
+                            InjectVTarget.reset(new uint8_t[InjectVSize]);
+                            uint8_t *dats = new uint8_t[InjectVSize * 10];
+
+                            InjectVTarget.get()[0] = FrameFECSyncID;
+                            std::copy(dataOut.data, dataOut.data + dataOut.size, InjectVTarget.get() + 1);
+                            // TODO: add CRC check
+                            uint32_t table[256];
+                            crc32::generate_table(table);
+                            uint32_t crc = crc32::update(table, 0, (const void *)InjectVTarget.get(), InjectVSize - 4);
+                            // std::cout<< std::hex << crc << "\n";
+                            InjectVTarget.get()[InjectVSize - 4] = (uint8_t)(crc);
+                            InjectVTarget.get()[InjectVSize - 3] = (uint8_t)(crc >> 8);
+                            InjectVTarget.get()[InjectVSize - 2] = (uint8_t)(crc >> 16);
+                            InjectVTarget.get()[InjectVSize - 1] = (uint8_t)(crc >> 24);
+                            // TODO: add EFC data frame on COM_CastFrameIndex + 1
+                            Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
 #endif
                         }
 

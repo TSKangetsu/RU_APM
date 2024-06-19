@@ -1,5 +1,5 @@
 set(MPUDriver 'pigpio' CACHE  INTERNAL '') 
-set(MODULE_FFMPEG true  CACHE BOOL "enable module: H.264 or H.265 transcodec")
+set(MODULE_FFMPEG false  CACHE BOOL "enable module: H.264 or H.265 transcodec")
 set(MODULE_FECLIB true  CACHE BOOL "enable module: Reed solomon forward error correct")
 
 cmake_minimum_required(VERSION 3.13)
@@ -10,6 +10,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 project(Ru_APM)
 
+add_definitions(-DDEBUG)
 add_definitions(-DSELF_SIG_MANAGE)
 
 if(${MODULE_FFMPEG})
