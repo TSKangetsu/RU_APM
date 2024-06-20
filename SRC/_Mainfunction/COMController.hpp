@@ -42,6 +42,7 @@ public:
     ~COMController_t();
 
 private:
+    void VideoDataInject(uint8_t *data, int size);
     void COMBoradCastDataInject();
     //
     uint16_t FrameFECSyncID = 0;
@@ -135,25 +136,7 @@ COMController_t::COMController_t()
                         if (std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
                             std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265")
                         {
-                            FrameFECSyncID++;
-                            FrameFECSyncID = FrameFECSyncID == 0xff ? 0 : FrameFECSyncID;
-
-                            InjectVSize = data.size + 1 + 4;
-                            InjectVTarget.reset(new uint8_t[InjectVSize]);
-
-                            InjectVTarget.get()[0] = FrameFECSyncID;
-                            std::copy(data.data, data.data + data.size, InjectVTarget.get() + 1);
-                            // TODO: add CRC check
-                            uint32_t table[256];
-                            crc32::generate_table(table);
-                            uint32_t crc = crc32::update(table, 0, (const void *)InjectVTarget.get(), InjectVSize - 4);
-                            // std::cout<< std::hex << crc << "\n";
-                            InjectVTarget.get()[InjectVSize - 4] = (uint8_t)(crc);
-                            InjectVTarget.get()[InjectVSize - 3] = (uint8_t)(crc >> 8);
-                            InjectVTarget.get()[InjectVSize - 2] = (uint8_t)(crc >> 16);
-                            InjectVTarget.get()[InjectVSize - 1] = (uint8_t)(crc >> 24);
-                            // TODO: add EFC data frame on COM_CastFrameIndex + 1
-                            Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
+                            VideoDataInject(data.data, data.size);
                         }
                         else
                         {
@@ -163,25 +146,7 @@ COMController_t::COMController_t()
                             //
                             for (; !EncoderQueue.empty(); EncoderQueue.pop())
                             {
-                                FrameFECSyncID++;
-                                FrameFECSyncID = FrameFECSyncID == 0xff ? 0 : FrameFECSyncID;
-
-                                InjectVSize = EncoderQueue.front().size + 1 + 4;
-                                InjectVTarget.reset(new uint8_t[InjectVSize]);
-
-                                InjectVTarget.get()[0] = FrameFECSyncID;
-                                std::copy(EncoderQueue.front().data, EncoderQueue.front().data + EncoderQueue.front().size, InjectVTarget.get() + 1);
-                                // TODO: add CRC check
-                                uint32_t table[256];
-                                crc32::generate_table(table);
-                                uint32_t crc = crc32::update(table, 0, (const void *)InjectVTarget.get(), InjectVSize - 4);
-                                // std::cout<< std::hex << crc << "\n";
-                                InjectVTarget.get()[InjectVSize - 4] = (uint8_t)(crc);
-                                InjectVTarget.get()[InjectVSize - 3] = (uint8_t)(crc >> 8);
-                                InjectVTarget.get()[InjectVSize - 2] = (uint8_t)(crc >> 16);
-                                InjectVTarget.get()[InjectVSize - 1] = (uint8_t)(crc >> 24);
-                                // TODO: add EFC data frame on COM_CastFrameIndex + 1
-                                Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
+                                VideoDataInject(EncoderQueue.front().data, EncoderQueue.front().size);
                             }
 #else
                             // TODO: V4L2ENC support
@@ -257,6 +222,32 @@ COMController_t::COMController_t()
                 500.f));
         }
     }
+}
+
+void COMController_t::VideoDataInject(uint8_t *data, int size)
+{
+    int InjectVSize;
+    std::shared_ptr<uint8_t> InjectVTarget;
+
+    FrameFECSyncID++;
+    FrameFECSyncID = FrameFECSyncID == 0xff ? 0 : FrameFECSyncID;
+
+    InjectVSize = size + 1 + 4;
+    InjectVTarget.reset(new uint8_t[InjectVSize]);
+
+    InjectVTarget.get()[0] = FrameFECSyncID;
+    std::copy(data, data + size, InjectVTarget.get() + 1);
+    // TODO: add CRC check
+    uint32_t table[256];
+    crc32::generate_table(table);
+    uint32_t crc = crc32::update(table, 0, (const void *)InjectVTarget.get(), InjectVSize - 4);
+    // std::cout<< std::hex << crc << "\n";
+    InjectVTarget.get()[InjectVSize - 4] = (uint8_t)(crc);
+    InjectVTarget.get()[InjectVSize - 3] = (uint8_t)(crc >> 8);
+    InjectVTarget.get()[InjectVSize - 2] = (uint8_t)(crc >> 16);
+    InjectVTarget.get()[InjectVSize - 1] = (uint8_t)(crc >> 24);
+    // TODO: add EFC data frame on COM_CastFrameIndex + 1
+    Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
 }
 
 void COMController_t::COMBoradCastDataInject()

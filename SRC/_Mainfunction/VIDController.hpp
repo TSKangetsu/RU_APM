@@ -78,7 +78,7 @@ VIDController_t::VIDController_t()
                             .Is_AutoSize = (SYSC::VideoConfig[i].DeviceWidth < 0),
                             .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat),
                             .H264_PSize = SYSC::CommonConfig.COM_BroadCastPFrameSize,
-                            .H264_Profile = 0,
+                            .H264_Profile = V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE,
                             .H264_Bitrate = SYSC::CommonConfig.COM_BroadCastBitRate,
                             .H264_EnablePPS = true,
                         }));

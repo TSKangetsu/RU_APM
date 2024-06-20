@@ -17,11 +17,6 @@
 #include <iostream>
 #endif
 
-#define V4L2_H264_Control_h264_profile 0x00990a6b
-#define V4L2_H264_Control_h264_i_frame_period 0x00990a66
-#define V4L2_H264_Control_video_bitrate 0x009909cf
-#define V4L2_H264_Control_repeat_sequence_header 0x009909e2
-
 namespace V4L2Tools
 {
     struct V4l2Info

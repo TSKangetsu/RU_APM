@@ -18,10 +18,14 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
 
     if (v4l2d.PixFormat == V4L2_PIX_FMT_H264)
     {
-        V4L2Control(V4L2_H264_Control_h264_profile, v4l2d.H264_Profile);
-        V4L2Control(V4L2_H264_Control_h264_i_frame_period, v4l2d.H264_PSize);
-        V4L2Control(V4L2_H264_Control_video_bitrate, v4l2d.H264_Bitrate);
-        V4L2Control(V4L2_H264_Control_repeat_sequence_header, v4l2d.H264_EnablePPS);
+        V4L2Control(V4L2_CID_MPEG_VIDEO_BITRATE_MODE, V4L2_MPEG_VIDEO_BITRATE_MODE_VBR);
+        V4L2Control(V4L2_CID_MPEG_VIDEO_H264_PROFILE, v4l2d.H264_Profile);
+        V4L2Control(V4L2_CID_MPEG_VIDEO_H264_I_PERIOD, v4l2d.H264_PSize);
+        V4L2Control(V4L2_CID_MPEG_VIDEO_BITRATE, v4l2d.H264_Bitrate);
+        V4L2Control(V4L2_CID_MPEG_VIDEO_REPEAT_SEQ_HEADER, v4l2d.H264_EnablePPS);
+        V4L2Control(V4L2_CID_MPEG_VIDEO_H264_LEVEL, V4L2_MPEG_VIDEO_H264_LEVEL_4_0);
+        V4L2Control(V4L2_CID_MPEG_VIDEO_H264_MIN_QP, 16);
+        V4L2Control(V4L2_CID_MPEG_VIDEO_H264_MAX_QP, 32);
     }
 
     if (v4l2d.Is_AutoSize)
