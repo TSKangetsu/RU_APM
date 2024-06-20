@@ -157,7 +157,6 @@ COMController_t::COMController_t()
 
                             InjectVSize = dataOut.size + 1 + 4;
                             InjectVTarget.reset(new uint8_t[InjectVSize]);
-                            uint8_t *dats = new uint8_t[InjectVSize * 10];
 
                             InjectVTarget.get()[0] = FrameFECSyncID;
                             std::copy(dataOut.data, dataOut.data + dataOut.size, InjectVTarget.get() + 1);

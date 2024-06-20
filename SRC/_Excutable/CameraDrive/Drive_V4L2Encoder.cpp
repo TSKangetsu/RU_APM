@@ -151,14 +151,14 @@ void V4L2Tools::V4L2Encoder::V4L2EncodeSet(V4L2Tools::V4l2Data &VdataIn, V4L2Too
             v4l2d.PixFormat,
             v4l2.CameraFormat.fmt.pix.bytesperline);
 
-    V4L2Log(ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer), _v4l2_qbuf_error);
+    ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer);
 
     std::copy(VdataIn.data,
               VdataIn.data + VdataIn.size,
               (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index]);
 
     v4l2.CameraBuffer.m.planes->length = VdataIn.size;
-    V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_encin_error);
+    ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer);
     //=========================================================================================//
     if (VdataOut.size <= 0)
         VdataOut = V4L2Tools::V4l2Data(
@@ -177,11 +177,11 @@ void V4L2Tools::V4L2Encoder::V4L2EncodeSet(V4L2Tools::V4l2Data &VdataIn, V4L2Too
     tv.tv_sec = 10; // TODO: fix loop logic
     tv.tv_usec = 0;
     r = select(_flag_CameraFD + 1, &fds, NULL, NULL, &tv);
-    V4L2Log(ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBufferOut), _v4l2_qbuf_error);
+    ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBufferOut);
     VdataOut.bytesperline = v4l2.CameraFormatOut.fmt.pix.bytesperline;
     VdataOut.size = v4l2.CameraBufferOut.m.planes->bytesused;
     std::copy((unsigned char *)v4l2BuffersOut[v4l2.CameraBufferOut.index],
               (unsigned char *)v4l2BuffersOut[v4l2.CameraBufferOut.index] + VdataOut.size,
               VdataOut.data);
-    V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBufferOut), _v4l2_camread_error);
+    ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBufferOut);
 }
