@@ -5,7 +5,9 @@
 #include <sstream>
 #include <iostream>
 #include "_Mainfunction/UORBMessage.hpp"
+#ifdef MODULE_APM
 #include "_Mainfunction/APMController.hpp"
+#endif
 #include "_Mainfunction/PLGController.hpp"
 #include "_Mainfunction/VIDController.hpp"
 #include "_Mainfunction/COMController.hpp"
@@ -34,8 +36,10 @@ namespace RuAPSSys
 		{
 			// Step 1. Read Config from /boot/APSconfig.json.
 			RuAPSSys::ConfigFileSync(FileConfigTarget);
-			// Step 2. Load up SingleController.
+// Step 2. Load up SingleController.
+#ifdef MODULE_APM
 			APMController.reset(new APMController_t());
+#endif
 			// Step 3. Load up Camera System.
 			VIDController.reset(new VIDController_t());
 			// Step 4. Load up Message and VideoStream BoradCast;
@@ -47,11 +51,13 @@ namespace RuAPSSys
 
 		void SystemReboot();
 
-		SchedulerController &&SystemMonitorReg(); //SystemMonitor will check system Status 50HZ and Report Log to file
+		SchedulerController &&SystemMonitorReg(); // SystemMonitor will check system Status 50HZ and Report Log to file
 
 	private:
 		std::unique_ptr<FlowThread> SystemMonitoThread;
+#ifdef MODULE_APM
 		std::unique_ptr<APMController_t> APMController;
+#endif
 		std::unique_ptr<PLGController_t> PLGController;
 		std::unique_ptr<VIDController_t> VIDController;
 		std::unique_ptr<COMController_t> COMController;
@@ -81,8 +87,10 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 					LOG::LogPrintSTDIO(_VID << COMEXITPROCESSD);
 					VIDController.reset();
 					LOG::LogPrintSTDIO(_VID << VIDEXITPROCESSD);
+#ifdef MODULE_APM
 					APMController.reset(); // This Will Block untill APM complete Stop.
 					LOG::LogPrintSTDIO(_APM << APMEXITPROCESSD);
+#endif
 					// Exiting whole progress
 					LOG::LogPrintSTDIO(_SYS << SYSTEMEXITEDCAL);
 					exit(0);
@@ -90,12 +98,14 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 			},
 			FlowSytemMonHZ));
 	// Call Signal Handler
-	std::signal(SIGINT, [](int Signal) -> void
+	std::signal(SIGINT,
+				[](int Signal) -> void
 				{
 					RuAPSSys::APSSystemSignal = Signal;
 					LOG::LogPrintSTDIO(_SYS << SIGNALRECVINPUT << Signal << "\n");
 				});
-	std::signal(SIGTERM, [](int Signal) -> void
+	std::signal(SIGTERM,
+				[](int Signal) -> void
 				{
 					RuAPSSys::APSSystemSignal = Signal;
 					LOG::LogPrintSTDIO(_SYS << SIGNALRECVINPUT << Signal << "\n");
@@ -110,6 +120,6 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 	return std::move(*this);
 };
 
-void RuAPSSys::SchedulerController::SystemReboot(){
+void RuAPSSys::SchedulerController::SystemReboot() {
 
 };

@@ -7,7 +7,9 @@
 #include <fstream>
 #include "../_Excutable/Drive_Json.hpp"
 #include "../_Excutable/ThreadBuffer.hpp"
+#ifdef MODULE_APM
 #include "../RPiSingleAPM/src/SingleAPM.hpp"
+#endif
 #include "../_Excutable/CameraDrive/Drive_V4L2Reader.hpp"
 
 using json = nlohmann::json;
@@ -18,7 +20,9 @@ namespace RuAPSSys
 	class ConfigCLA
 	{
 	public:
+#ifdef MODULE_APM
 		inline static struct SingleAPMAPI::APMSettinngs APMConfig;
+#endif
 
 		struct VideoSettings
 		{
@@ -102,7 +106,8 @@ namespace RuAPSSys
 	};
 };
 
-//JSON Converter
+// JSON Converter
+#ifdef MODULE_APM
 namespace SingleAPMAPI
 {
 	void to_json(json &j, const SingleAPMAPI::APMSettinngs &p)
@@ -402,6 +407,7 @@ namespace SingleAPMAPI
 		j.at("_flag_Filter_PID_D_ST2_CutOff").get_to(p.FC._flag_Filter_PID_D_ST2_CutOff);
 	}
 }
+#endif
 
 namespace RuAPSSys
 {
@@ -480,10 +486,9 @@ namespace RuAPSSys
 
 };
 
-//Operator
+// Operator
 namespace RuAPSSys
 {
-
 	inline void ConfigFileSync(std::string path)
 	{
 		std::ifstream config(path);
@@ -491,7 +496,9 @@ namespace RuAPSSys
 							(std::istreambuf_iterator<char>()));
 
 		json Container = json::parse(content);
+#ifdef MODULE_APM
 		ConfigCLA::APMConfig = Container["APMConfig"].get<SingleAPMAPI::APMSettinngs>();
+#endif
 		ConfigCLA::VideoConfig = Container["VideoConfig"]["Device"].get<std::vector<ConfigCLA::VideoSettings>>();
 		ConfigCLA::CommonConfig = Container["CommonConfig"].get<ConfigCLA::CommonSettings>();
 		return; // just for breakpoint

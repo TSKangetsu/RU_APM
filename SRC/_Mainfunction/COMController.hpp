@@ -109,10 +109,10 @@ COMController_t::COMController_t()
             }
 
             // TODO: better way network control
-            system("iw dev wlan1 set type monitor");
-            system("iw dev wlan1 set monitor fcsfail");
-            system("iw dev wlan1 set freq 5600");
-            system("iw dev wlan1 set txpower fixed 3000");
+            system("/usr/sbin/iw dev wlan1 set type monitor");
+            system("/usr/sbin/iw dev wlan1 set monitor fcsfail");
+            system("/usr/sbin/iw dev wlan1 set freq 5600");
+            system("/usr/sbin/iw dev wlan1 set txpower fixed 3000");
 
             Injector.reset(new WIFICastDriver(SYSC::CommonConfig.BroadcastInterfaces));
 

@@ -1,6 +1,8 @@
 set(MPUDriver 'pigpio' CACHE  INTERNAL '') 
+set(MODULE_APM true  CACHE BOOL "enable module: singleflight APM controller")
 set(MODULE_FFMPEG true  CACHE BOOL "enable module: H.264 or H.265 transcodec")
 set(MODULE_FECLIB true  CACHE BOOL "enable module: Reed solomon forward error correct")
+set(FULLSTATIC false CACHE  INTERNAL bool)
 
 cmake_minimum_required(VERSION 3.13)
 set(CMAKE_CXX_STANDARD 17)
@@ -9,6 +11,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 project(Ru_APM)
+
+IF(FULLSTATIC)
+  set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+  set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+  set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+  set(BUILD_SHARED_LIBS OFF)
+  set(CMAKE_EXE_LINKER_FLAGS "-static -static-libstdc++ -static-libgcc")
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+ENDIF()
 
 add_definitions(-DDEBUG)
 add_definitions(-DSELF_SIG_MANAGE)
@@ -39,11 +50,15 @@ if(${MODULE_FECLIB})
 endif()
 
 find_package(Threads REQUIRED)
-add_subdirectory(SRC/RPiSingleAPM/src)
+
+if(${MODULE_APM})
+    add_subdirectory(SRC/RPiSingleAPM/src)
+endif()
+
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/SRC/_Excutable/CameraDrive/ v4l2)
 
 add_executable(RuAPM_Cli SRC/Launch.cpp ${v4l2} "$<$<BOOL:${MODULE_FFMPEG}>:${FFMPEG}>")
 
-target_link_libraries(RuAPM_Cli RPiSingleAPI)
+target_link_libraries(RuAPM_Cli  "$<$<BOOL:${MODULE_APM}>:${RPiSingleAPI}>" )
 target_link_libraries(RuAPM_Cli Threads::Threads)
 target_link_libraries(RuAPM_Cli "$<$<BOOL:${MODULE_FFMPEG}>:${AV_Tool_LIB}>")
