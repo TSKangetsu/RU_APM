@@ -110,9 +110,9 @@ COMController_t::COMController_t()
 
             // TODO: better way network control
             system("/usr/sbin/iw dev wlan1 set type monitor");
-            system("/usr/sbin/iw dev wlan1 set monitor fcsfail");
-            system("/usr/sbin/iw dev wlan1 set freq 5600");
-            system("/usr/sbin/iw dev wlan1 set txpower fixed 3000");
+            system("/usr/sbin/iw dev wlan1 set monitor fcsfail otherbss");
+            system("/usr/sbin/iw dev wlan1 set freq 5600 NOHT");
+            system("/usr/sbin/iw dev wlan1 set txpower fixed 1500");
 
             Injector.reset(new WIFICastDriver(SYSC::CommonConfig.BroadcastInterfaces));
 
@@ -151,26 +151,7 @@ COMController_t::COMController_t()
 #else
                             // TODO: V4L2ENC support
                             V4L2Enc->V4L2EncodeSet(data, dataOut);
-
-                            FrameFECSyncID++;
-                            FrameFECSyncID = FrameFECSyncID == 0xff ? 0 : FrameFECSyncID;
-
-                            InjectVSize = dataOut.size + 1 + 4;
-                            InjectVTarget.reset(new uint8_t[InjectVSize]);
-
-                            InjectVTarget.get()[0] = FrameFECSyncID;
-                            std::copy(dataOut.data, dataOut.data + dataOut.size, InjectVTarget.get() + 1);
-                            // TODO: add CRC check
-                            uint32_t table[256];
-                            crc32::generate_table(table);
-                            uint32_t crc = crc32::update(table, 0, (const void *)InjectVTarget.get(), InjectVSize - 4);
-                            // std::cout<< std::hex << crc << "\n";
-                            InjectVTarget.get()[InjectVSize - 4] = (uint8_t)(crc);
-                            InjectVTarget.get()[InjectVSize - 3] = (uint8_t)(crc >> 8);
-                            InjectVTarget.get()[InjectVSize - 2] = (uint8_t)(crc >> 16);
-                            InjectVTarget.get()[InjectVSize - 1] = (uint8_t)(crc >> 24);
-                            // TODO: add EFC data frame on COM_CastFrameIndex + 1
-                            Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
+                            VideoDataInject(dataOut.data, dataOut.size);
 #endif
                         }
 

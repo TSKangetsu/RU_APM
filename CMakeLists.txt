@@ -21,6 +21,7 @@ IF(FULLSTATIC)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 ENDIF()
 
+# add_definitions(-DNETDEBUG)
 add_definitions(-DDEBUG)
 add_definitions(-DSELF_SIG_MANAGE)
 

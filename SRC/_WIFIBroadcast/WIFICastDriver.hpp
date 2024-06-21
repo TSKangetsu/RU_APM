@@ -9,25 +9,15 @@
 
 #include <iomanip>
 
-#define FrameTypeL 58
-#define FrameLLCMark 59
+#define HeaderSize 61
+
+#define FrameTypeL (HeaderSize - 3)
+#define FrameLLCMark (HeaderSize - 2)
 #define VideoTrans 0x68
 #define DataETrans 0x69
 #define FeedBackTrans 0x77
 #define SocketMTU 1490 - 5 // FCS auto add by driver or kerenl
-#define HeaderSize 61
 #define SocketMTUMAX 1500
-#define LOSEMAXPRE 100
-
-#define DATA_STREAMID 0
-#define DATA_TMPSIZE 1
-#define DATA_WIDTH 2
-#define DATA_HEIGHT 3
-#define DATA_FRAMESEQ 4
-#define DATA_SIZENOW 5
-#define DATA_SIZEMAX 6
-#define DATA_LOSE 7
-#define DATA_LOSEPRE 8
 
 #define CAST32(x) reinterpret_cast<uint32_t *>(x)[0]
 
@@ -87,8 +77,9 @@ namespace WIFIBroadCast
                 0x00, 0x00, 0x20, 0x00, 0xae, 0x40, 0x00, 0xa0,
                 0x20, 0x08, 0x00, 0xa0, 0x20, 0x08, 0x00, 0x00};
             // Auto Complete by driver or kerenl
+            // TODO: must set data rate or defaultly run in 6mbps
             const uint8_t RadioInfo[16] = {
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
             // Frame Control field and Duration
             const uint8_t Data80211Info[4] = {
@@ -260,17 +251,6 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff(std::function<void(VideoPacket
         {
             uint8_t dataTmp[SocketMTUMAX] = {0x00};
             SocketInjectors[0]->Sniff(dataTmp, SocketMTUMAX);
-
-            // for (size_t i = 0; i < SocketMTUMAX; i++)
-            // {
-            //     if (dataTmp[i] == 0 && dataTmp[i + 1] == 0 &&
-            //         dataTmp[i + 2] == 0 && dataTmp[i + 3] == 1)
-            //     {
-            //         std::cout << "offset: " << std::setw(7) << std::setfill(' ') << i << " -> ";
-            //         std::cout << "header: " << std::hex << "0x" << (int)dataTmp[i + 4] << std::dec << " <--> ";
-            //     }
-            // }
-            // std::cout << "\n";
             // FIXME: must locate every frame one by one
             // From data HeaderSize:
             int size = dataTmp[FrameTypeL - 1];
