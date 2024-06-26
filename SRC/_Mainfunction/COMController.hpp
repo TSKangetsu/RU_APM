@@ -109,10 +109,15 @@ COMController_t::COMController_t()
             }
 
             // TODO: better way network control
-            system("/usr/sbin/iw dev wlan1 set type monitor");
-            system("/usr/sbin/iw dev wlan1 set monitor fcsfail otherbss");
-            system("/usr/sbin/iw dev wlan1 set freq 5600 NOHT");
-            system("/usr/sbin/iw dev wlan1 set txpower fixed 1500");
+            char cmd[64];
+            sprintf(cmd, "iw dev %s set type monitor", SYSC::CommonConfig.BroadcastInterfaces);
+            system(cmd);
+            sprintf(cmd, "iw dev %s set monitor fcsfail otherbss", SYSC::CommonConfig.BroadcastInterfaces);
+            system(cmd);
+            sprintf(cmd, "iw dev %s set freq 5600 NOHT", SYSC::CommonConfig.BroadcastInterfaces);
+            system(cmd);
+            sprintf(cmd, "iw dev %s set txpower fixed 3000", SYSC::CommonConfig.BroadcastInterfaces);
+            system(cmd);
 
             Injector.reset(new WIFICastDriver(SYSC::CommonConfig.BroadcastInterfaces));
 
