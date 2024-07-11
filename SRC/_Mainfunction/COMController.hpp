@@ -13,6 +13,9 @@
 #include "../_Excutable/CameraDrive/Drive_V4L2Reader.hpp"
 
 #ifdef MODULE_FECLIB
+#include "../_Excutable/FEC/fec.hpp"
+#define FEC_PACKET_MAX 32
+#define FEC_DATA_MAX (FEC_PACKET_MAX * PacketPrePacks)
 #endif
 
 using namespace WIFIBroadCast;
@@ -67,6 +70,9 @@ private:
 
 COMController_t::COMController_t()
 {
+#ifdef MODULE_FECLIB
+    fec_init();
+#endif
     // Step 1:
     if (SYSC::CommonConfig.COM_BroadCastEnable)
     {
@@ -110,13 +116,13 @@ COMController_t::COMController_t()
 
             // TODO: better way network control
             char cmd[64];
-            sprintf(cmd, "iw dev %s set type monitor", SYSC::CommonConfig.BroadcastInterfaces);
+            sprintf(cmd, "iw dev %s set type monitor", SYSC::CommonConfig.BroadcastInterfaces[0].c_str());
             system(cmd);
-            sprintf(cmd, "iw dev %s set monitor fcsfail otherbss", SYSC::CommonConfig.BroadcastInterfaces);
+            sprintf(cmd, "iw dev %s set monitor fcsfail otherbss", SYSC::CommonConfig.BroadcastInterfaces[0].c_str());
             system(cmd);
-            sprintf(cmd, "iw dev %s set freq 5600 NOHT", SYSC::CommonConfig.BroadcastInterfaces);
+            sprintf(cmd, "iw dev %s set freq 5600 NOHT", SYSC::CommonConfig.BroadcastInterfaces[0].c_str());
             system(cmd);
-            sprintf(cmd, "iw dev %s set txpower fixed 3000", SYSC::CommonConfig.BroadcastInterfaces);
+            sprintf(cmd, "iw dev %s set txpower fixed 3000", SYSC::CommonConfig.BroadcastInterfaces[0].c_str());
             system(cmd);
 
             Injector.reset(new WIFICastDriver(SYSC::CommonConfig.BroadcastInterfaces));
@@ -157,6 +163,9 @@ COMController_t::COMController_t()
                             // TODO: V4L2ENC support
                             V4L2Enc->V4L2EncodeSet(data, dataOut);
                             VideoDataInject(dataOut.data, dataOut.size);
+
+                        // InjectVTarget.reset(new uint8_t[16384]);
+                        // VideoDataInject(InjectVTarget.get(), 16384);
 #endif
                         }
 
@@ -177,7 +186,12 @@ COMController_t::COMController_t()
                                 (uint8_t)(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceHeight >> 8),
                             };
 
-                            Injector->WIFICastInject(ImgInfo, sizeof(ImgInfo), 0, BroadCastType::DataStream, 0, 0xf);
+                            Injector->WIFICastInject(ImgInfo, sizeof(ImgInfo), 0, BroadCastType::DataStream, 0, 0xf, 0xff);
+#ifdef MODULE_FECLIB
+                            // FEC data using next channel
+                            ImgInfo[0] = (uint8_t)(SYSC::CommonConfig.COM_CastFrameIndex + 1);
+                            Injector->WIFICastInject(ImgInfo, sizeof(ImgInfo), 0, BroadCastType::DataStream, 0, 0xf, 0xff);
+#endif
                             if (IsTimedetectUpdated)
                             {
                                 Timedetectedstart = GetTimeStamp();
@@ -212,16 +226,17 @@ COMController_t::COMController_t()
 void COMController_t::VideoDataInject(uint8_t *data, int size)
 {
     int InjectVSize;
+    int InjectFSize;
     std::shared_ptr<uint8_t> InjectVTarget;
+    std::shared_ptr<uint8_t> InjectFTarget;
 
     FrameFECSyncID++;
     FrameFECSyncID = FrameFECSyncID == 0xff ? 0 : FrameFECSyncID;
 
-    InjectVSize = size + 1 + 4;
+    InjectVSize = size + 4;
     InjectVTarget.reset(new uint8_t[InjectVSize]);
 
-    InjectVTarget.get()[0] = FrameFECSyncID;
-    std::copy(data, data + size, InjectVTarget.get() + 1);
+    std::copy(data, data + size, InjectVTarget.get());
     // TODO: add CRC check
     uint32_t table[256];
     crc32::generate_table(table);
@@ -232,7 +247,28 @@ void COMController_t::VideoDataInject(uint8_t *data, int size)
     InjectVTarget.get()[InjectVSize - 2] = (uint8_t)(crc >> 16);
     InjectVTarget.get()[InjectVSize - 1] = (uint8_t)(crc >> 24);
     // TODO: add EFC data frame on COM_CastFrameIndex + 1
-    Injector->WIFICastInject(InjectVTarget.get(), InjectVSize, 0, BroadCastType::VideoStream, 0, SYSC::CommonConfig.COM_CastFrameIndex * 2);
+    int packetSize = Injector->WIFICastInject(InjectVTarget.get(),
+                                              InjectVSize, 0, BroadCastType::VideoStream, 0,
+                                              SYSC::CommonConfig.COM_CastFrameIndex * 2,
+                                              FrameFECSyncID);
+
+#ifdef MODULE_FECLIB
+    InjectFSize = size; // NO CRC32, why using CRC for FEC?
+    InjectFTarget.reset(new uint8_t[InjectFSize]);
+    //
+    FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> fecPool;
+    FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> dataPool;
+    std::memcpy(InjectVTarget.get(), dataPool.FecDataType_t.data1d, InjectFSize);
+    fec_encode(PacketPrePacks, dataPool.dataout, packetSize, fecPool.dataout, packetSize);
+    //
+    std::memcpy(fecPool.FecDataType_t.data1d, InjectFTarget.get(), InjectFSize);
+    //
+    Injector->WIFICastInject(InjectFTarget.get(),
+                             InjectFSize, // FIXME: FEC frame same as data frame? now test with full fec out
+                             0, BroadCastType::VideoStream, 0,
+                             SYSC::CommonConfig.COM_CastFrameIndex * 2 + 1,
+                             FrameFECSyncID);
+#endif
 }
 
 void COMController_t::COMBoradCastDataInject()

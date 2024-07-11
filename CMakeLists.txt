@@ -48,6 +48,7 @@ endif()
 
 if(${MODULE_FECLIB})
     add_definitions(-DMODULE_FECLIB)
+    aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/SRC/_Excutable/FEC/ fec)
 endif()
 
 find_package(Threads REQUIRED)
@@ -58,7 +59,7 @@ endif()
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/SRC/_Excutable/CameraDrive/ v4l2)
 
-add_executable(RuAPM_Cli SRC/Launch.cpp ${v4l2} "$<$<BOOL:${MODULE_FFMPEG}>:${FFMPEG}>")
+add_executable(RuAPM_Cli SRC/Launch.cpp ${v4l2} ${fec} "$<$<BOOL:${MODULE_FFMPEG}>:${FFMPEG}>")
 
 target_link_libraries(RuAPM_Cli  "$<$<BOOL:${MODULE_APM}>:${RPiSingleAPI}>" )
 target_link_libraries(RuAPM_Cli Threads::Threads)
