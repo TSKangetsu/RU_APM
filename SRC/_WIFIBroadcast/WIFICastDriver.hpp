@@ -9,30 +9,9 @@
 
 #include <iomanip>
 
-#define FrameTypeL 58
-#define FrameLLCMark 59
-#define VideoTrans 0x68
-#define DataETrans 0x69
-#define FeedBackTrans 0x77
-#define SocketMTU 1490 - 5 // FCS auto add by driver or kerenl
-#define HeaderSize 61
-#define SocketMTUMAX 1500
-#define LOSEMAXPRE 100
-
-#define DATA_STREAMID 0
-#define DATA_TMPSIZE 1
-#define DATA_WIDTH 2
-#define DATA_HEIGHT 3
-#define DATA_FRAMESEQ 4
-#define DATA_SIZENOW 5
-#define DATA_SIZEMAX 6
-#define DATA_LOSE 7
-#define DATA_LOSEPRE 8
-
 #define CAST32(x) reinterpret_cast<uint32_t *>(x)[0]
 
 #define HeaderSize 61
-
 #define FrameTypeL (HeaderSize - 3)
 #define FrameLLCMark (HeaderSize - 2)
 #define VideoTrans 0x68
@@ -237,7 +216,7 @@ int WIFIBroadCast::WIFICastDriver::WIFICastInject(uint8_t *data, int len, int In
             if (type == BroadCastType::DataStream)
                 tmpData[((size + HeaderSize + 1))] = FrameQueueID << 5 | 0x1f;
             // TODO: adding extra id frame locator
-            tmpData[((size + HeaderSize))] = FrameMarking;
+            tmpData[((size + HeaderSize))] = FrameMarking << 5 | (uint8_t)PacketSize;
             //
             tmpData[FrameTypeL - 1] = (size + HeaderSize + 2);
             tmpData[FrameTypeL - 2] = (size + HeaderSize + 2) >> 8;
@@ -255,7 +234,7 @@ int WIFIBroadCast::WIFICastDriver::WIFICastInject(uint8_t *data, int len, int In
             if (type == BroadCastType::DataStream)
                 tmpData[(SocketMTU + 1)] = FrameQueueID << 5 | FrameCounter69;
             // TODO: adding extra id frame locator
-            tmpData[(SocketMTU)] = FrameMarking;
+            tmpData[(SocketMTU)] = FrameMarking << 5 | (uint8_t)PacketSize;
             //
             tmpData[(FrameTypeL - 1)] = (uint8_t)(SocketMTU + 2);
             tmpData[(FrameTypeL - 2)] = (uint8_t)((SocketMTU + 2) >> 8);

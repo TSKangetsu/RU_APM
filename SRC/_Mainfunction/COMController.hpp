@@ -161,11 +161,16 @@ COMController_t::COMController_t()
                             }
 #else
                             // TODO: V4L2ENC support
-                            V4L2Enc->V4L2EncodeSet(data, dataOut);
-                            VideoDataInject(dataOut.data, dataOut.size);
+                            // V4L2Enc->V4L2EncodeSet(data, dataOut);
+                            // VideoDataInject(dataOut.data, dataOut.size);
 
-                        // InjectVTarget.reset(new uint8_t[16384]);
-                        // VideoDataInject(InjectVTarget.get(), 16384);
+                            InjectVTarget.reset(new uint8_t[16384]);
+                            std::memset(InjectVTarget.get(), 0xFE, 16384);
+                            for (size_t i = 0; i < 12; i++)
+                            {
+                                InjectVTarget.get()[(PacketPrePacks * i + 4)] = 0x7f;
+                            }
+                            VideoDataInject(InjectVTarget.get(), 16384);
 #endif
                         }
 
@@ -231,7 +236,7 @@ void COMController_t::VideoDataInject(uint8_t *data, int size)
     std::shared_ptr<uint8_t> InjectFTarget;
 
     FrameFECSyncID++;
-    FrameFECSyncID = FrameFECSyncID == 0xff ? 0 : FrameFECSyncID;
+    FrameFECSyncID = FrameFECSyncID > 7 ? 0 : FrameFECSyncID;
 
     InjectVSize = size + 4;
     InjectVTarget.reset(new uint8_t[InjectVSize]);
@@ -258,11 +263,10 @@ void COMController_t::VideoDataInject(uint8_t *data, int size)
     //
     FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> fecPool;
     FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> dataPool;
-    std::memcpy(InjectVTarget.get(), dataPool.FecDataType_t.data1d, InjectFSize);
+    std::copy(InjectVTarget.get(), InjectVTarget.get() + (InjectVSize - 4), dataPool.FecDataType_t.data1d);
     fec_encode(PacketPrePacks, dataPool.dataout, packetSize, fecPool.dataout, packetSize);
     //
-    std::memcpy(fecPool.FecDataType_t.data1d, InjectFTarget.get(), InjectFSize);
-    //
+    std::copy(fecPool.FecDataType_t.data1d, fecPool.FecDataType_t.data1d + InjectFSize, InjectFTarget.get());
     Injector->WIFICastInject(InjectFTarget.get(),
                              InjectFSize, // FIXME: FEC frame same as data frame? now test with full fec out
                              0, BroadCastType::VideoStream, 0,
