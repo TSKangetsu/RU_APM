@@ -161,16 +161,8 @@ COMController_t::COMController_t()
                             }
 #else
                             // TODO: V4L2ENC support
-                            // V4L2Enc->V4L2EncodeSet(data, dataOut);
-                            // VideoDataInject(dataOut.data, dataOut.size);
-
-                            InjectVTarget.reset(new uint8_t[16384]);
-                            std::memset(InjectVTarget.get(), 0xFE, 16384);
-                            for (size_t i = 0; i < 12; i++)
-                            {
-                                InjectVTarget.get()[(PacketPrePacks * i + 4)] = 0x7f;
-                            }
-                            VideoDataInject(InjectVTarget.get(), 16384);
+                            V4L2Enc->V4L2EncodeSet(data, dataOut);
+                            VideoDataInject(dataOut.data, dataOut.size);
 #endif
                         }
 
@@ -243,14 +235,16 @@ void COMController_t::VideoDataInject(uint8_t *data, int size)
 
     std::copy(data, data + size, InjectVTarget.get());
     // TODO: add CRC check
-    uint32_t table[256];
-    crc32::generate_table(table);
-    uint32_t crc = crc32::update(table, 0, (const void *)InjectVTarget.get(), InjectVSize - 4);
-    // std::cout<< std::hex << crc << "\n";
-    InjectVTarget.get()[InjectVSize - 4] = (uint8_t)(crc);
-    InjectVTarget.get()[InjectVSize - 3] = (uint8_t)(crc >> 8);
-    InjectVTarget.get()[InjectVSize - 2] = (uint8_t)(crc >> 16);
-    InjectVTarget.get()[InjectVSize - 1] = (uint8_t)(crc >> 24);
+    {
+        uint32_t table[256];
+        crc32::generate_table(table);
+        uint32_t crc = crc32::update(table, 0, (const void *)InjectVTarget.get(), InjectVSize - 4);
+        // std::cout << std::hex << crc << "\n";
+        InjectVTarget.get()[InjectVSize - 4] = (uint8_t)(crc);
+        InjectVTarget.get()[InjectVSize - 3] = (uint8_t)(crc >> 8);
+        InjectVTarget.get()[InjectVSize - 2] = (uint8_t)(crc >> 16);
+        InjectVTarget.get()[InjectVSize - 1] = (uint8_t)(crc >> 24);
+    }
     // TODO: add EFC data frame on COM_CastFrameIndex + 1
     int packetSize = Injector->WIFICastInject(InjectVTarget.get(),
                                               InjectVSize, 0, BroadCastType::VideoStream, 0,
@@ -258,16 +252,19 @@ void COMController_t::VideoDataInject(uint8_t *data, int size)
                                               FrameFECSyncID);
 
 #ifdef MODULE_FECLIB
-    InjectFSize = size; // NO CRC32, why using CRC for FEC?
+    InjectFSize = size + 4; // NO CRC32, why using CRC for FEC? Update: yes, just fec the crc data, after fix can use it
     InjectFTarget.reset(new uint8_t[InjectFSize]);
     //
     FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> fecPool;
     FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> dataPool;
-    std::copy(InjectVTarget.get(), InjectVTarget.get() + (InjectVSize - 4), dataPool.FecDataType_t.data1d);
-    fec_encode(PacketPrePacks, dataPool.dataout, packetSize, fecPool.dataout, packetSize);
+    std::memset(fecPool.FecDataType_t.data1d, 0x00, FEC_DATA_MAX);
+    std::memset(dataPool.FecDataType_t.data1d, 0x00, FEC_DATA_MAX);
     //
+    std::copy(InjectVTarget.get(), InjectVTarget.get() + InjectFSize, dataPool.FecDataType_t.data1d);
+    fec_encode(PacketPrePacks, dataPool.dataout, packetSize, fecPool.dataout, packetSize);
     std::copy(fecPool.FecDataType_t.data1d, fecPool.FecDataType_t.data1d + InjectFSize, InjectFTarget.get());
-    Injector->WIFICastInject(InjectFTarget.get(),
+
+    Injector->WIFICastInject(fecPool.FecDataType_t.data1d,
                              InjectFSize, // FIXME: FEC frame same as data frame? now test with full fec out
                              0, BroadCastType::VideoStream, 0,
                              SYSC::CommonConfig.COM_CastFrameIndex * 2 + 1,
