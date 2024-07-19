@@ -176,7 +176,6 @@ namespace SingleAPMAPI
 			{"_flag_PID_Alt_Accel_Max", p.PC._flag_PID_Alt_Accel_Max},
 			{"_flag_PID_PosMan_Speed_Max", p.PC._flag_PID_PosMan_Speed_Max},
 			{"_flag_PID_Pos_Speed_Max", p.PC._flag_PID_Pos_Speed_Max},
-			{"_flag_PID_Pos_Accel_Max", p.PC._flag_PID_Pos_Accel_Max},
 			{"_flag_PID_TPA_Trust", p.PC._flag_PID_TPA_Trust},
 			{"_flag_PID_TPA_BreakPoint", p.PC._flag_PID_TPA_BreakPoint},
 			{"_flag_MPU_Flip__Roll", p.SC._flag_MPU_Flip__Roll},
@@ -251,7 +250,6 @@ namespace SingleAPMAPI
 			{"_flag_GPS_Config_Beta", p.FC._flag_GPS_Config_Beta},
 			{"_flag_Flow_Config_Beta", p.FC._flag_Flow_Config_Beta},
 			{"_flag_Braking_Speed_Gain", p.FC._flag_Braking_Speed_Gain},
-			{"_flag_Braking_AccelMax_Gain", p.FC._flag_Braking_AccelMax_Gain},
 			{"_flag_Filter_RC_CutOff", p.FC._flag_Filter_RC_CutOff},
 			{"_flag_Filter_AngleRate_CutOff", p.FC._flag_Filter_AngleRate_CutOff},
 			{"_flag_Filter_PID_I_CutOff", p.FC._flag_Filter_PID_I_CutOff},
@@ -324,7 +322,6 @@ namespace SingleAPMAPI
 		j.at("_flag_PID_Alt_Accel_Max").get_to(p.PC._flag_PID_Alt_Accel_Max);
 		j.at("_flag_PID_PosMan_Speed_Max").get_to(p.PC._flag_PID_PosMan_Speed_Max);
 		j.at("_flag_PID_Pos_Speed_Max").get_to(p.PC._flag_PID_Pos_Speed_Max);
-		j.at("_flag_PID_Pos_Accel_Max").get_to(p.PC._flag_PID_Pos_Accel_Max);
 		j.at("_flag_PID_TPA_Trust").get_to(p.PC._flag_PID_TPA_Trust);
 		j.at("_flag_PID_TPA_BreakPoint").get_to(p.PC._flag_PID_TPA_BreakPoint);
 		j.at("_flag_MPU_Flip__Roll").get_to(p.SC._flag_MPU_Flip__Roll);
@@ -399,7 +396,6 @@ namespace SingleAPMAPI
 		j.at("_flag_GPS_Config_Beta").get_to(p.FC._flag_GPS_Config_Beta);
 		j.at("_flag_Flow_Config_Beta").get_to(p.FC._flag_Flow_Config_Beta);
 		j.at("_flag_Braking_Speed_Gain").get_to(p.FC._flag_Braking_Speed_Gain);
-		j.at("_flag_Braking_AccelMax_Gain").get_to(p.FC._flag_Braking_AccelMax_Gain);
 		j.at("_flag_Filter_RC_CutOff").get_to(p.FC._flag_Filter_RC_CutOff);
 		j.at("_flag_Filter_AngleRate_CutOff").get_to(p.FC._flag_Filter_AngleRate_CutOff);
 		j.at("_flag_Filter_PID_I_CutOff").get_to(p.FC._flag_Filter_PID_I_CutOff);

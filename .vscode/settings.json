@@ -12,8 +12,9 @@
     "cmake.configureArgs": [
         "-DMPUDriver=spidev",
         "-DFULLSTATIC=true",
-        "-DOPENWRT=true",
+        "-DOPENWRT=false",
         "-DMODULE_FFMPEG=false",
-        "-DMODULE_APM=false"
+        "-DMODULE_APM=true",
+        "-DMODULE_FECLIB=true"
     ],
 }
