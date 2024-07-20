@@ -1,6 +1,6 @@
 {
     "APMConfig": {
-        "Device": {
+        "DeviceConfig": {
             "BBC_Freqeuncy": 2000,
             "BBC_PInterval": "1/1",
             "ESC_Freqeuncy": 1000,
@@ -19,7 +19,7 @@
             "__MPUDeviceSPI": "/dev/spidev0.0",
             "__RCDevice": "/dev/ttyS2"
         },
-        "Filter": {
+        "FilterConfig": {
             "_flag_AccelBias_Trust_Beta": 0.02,
             "_flag_Accel_Trust_Beta": 1.0,
             "_flag_Baro_Trust_Beta": 0.5,
@@ -47,7 +47,7 @@
             "_flag_GPS_Config_Beta": 1.0,
             "_flag_Sonar_Trust_Beta": 1.0
         },
-        "PID": {
+        "PIDConfig": {
             "AltitudePID": {
                 "_flag_PID_Alt_Accel_Max": 300.0,
                 "_flag_PID_Alt_Level_Max": 300,
@@ -113,7 +113,7 @@
                 "_flag_YAWOut_Reverse": -1
             }
         },
-        "Recvier": {
+        "RCConfig": {
             "_flag_RCIsReserv_Pitch": 1,
             "_flag_RCIsReserv__Roll": 1,
             "_flag_RCIsReserv___Yaw": 1,
@@ -135,7 +135,7 @@
             "_flag_RC_Mid_PWM_Value": 1499,
             "_flag_RC_Min_PWM_Value": 1000
         },
-        "Sensor": {
+        "SensorConfig": {
             "_flag_Accel_Pitch_Cali": 0,
             "_flag_Accel__Roll_Cali": 0,
             "_flag_COMPASS_Flip_Pitch": 0,
