@@ -78,16 +78,16 @@ COMController_t::COMController_t()
     {
         if (SYSU::StreamStatus.VideoIFlowRaw.size() > 0)
         {
-            if (!(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
-                  std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265"))
+            if (!(std::get<SYSC::CameraSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
+                  std::get<SYSC::CameraSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265"))
             {
 #ifdef MODULE_FFMPEG
-                AVPixelFormat targetOption = (AVPixelFormat)CodecFormats.at((std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat));
+                AVPixelFormat targetOption = (AVPixelFormat)CodecFormats.at((std::get<SYSC::CameraSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat));
                 Encoder.reset(new FFMPEGTools::FFMPEGCodec({
-                    .IOWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
-                    .IOHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
+                    .IOWidth = SYSC::CameraConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
+                    .IOHeight = SYSC::CameraConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
                     .OBuffer = SYSC::CommonConfig.COM_BroadCastPFrameSize,
-                    .OFrameRate = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
+                    .OFrameRate = SYSC::CameraConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
                     .OBitRate = SYSC::CommonConfig.COM_BroadCastBitRate,
                     .CodecProfile = "baseline",
                     .OutputFormat = AV_CODEC_ID_H264,
@@ -96,14 +96,14 @@ COMController_t::COMController_t()
 #endif
 
                 V4L2Enc.reset(new V4L2Tools::V4L2Encoder(
-                    "/dev/video11",
+                    SYSC::VideoConfig.V4L2Encoder,
                     {
-                        .ImgWidth = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
-                        .ImgHeight = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
-                        .FrameRate = SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
+                        .ImgWidth = SYSC::CameraConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth,
+                        .ImgHeight = SYSC::CameraConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceHeight,
+                        .FrameRate = SYSC::CameraConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS,
                         .FrameBuffer = MAXV4LBUF,
-                        .Is_AutoSize = (SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth < 0),
-                        .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceIFormat),
+                        .Is_AutoSize = (SYSC::CameraConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceWidth < 0),
+                        .PixFormat = V4L2Format_s.at(SYSC::CameraConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceIFormat),
                         .H264_PSize = SYSC::CommonConfig.COM_BroadCastPFrameSize,
                         .H264_Profile = V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE,
                         .H264_Bitrate = SYSC::CommonConfig.COM_BroadCastBitRate,
@@ -144,8 +144,8 @@ COMController_t::COMController_t()
                     if (data.size > 0)
                     {
                         // TODO: consider add a timestamp binding EFC and data
-                        if (std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
-                            std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265")
+                        if (std::get<SYSC::CameraSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H264" ||
+                            std::get<SYSC::CameraSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceIFormat == "H265")
                         {
                             VideoDataInject(data.data, data.size);
                         }
@@ -168,7 +168,7 @@ COMController_t::COMController_t()
 
                         // Step N + 1. Inject img info.
                         BroadCastDataCount++;
-                        if (BroadCastDataCount >= (float)SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS)
+                        if (BroadCastDataCount >= (float)SYSC::CameraConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS)
                         {
                             BroadCastDataCount = 0;
                             uint8_t ImgInfo[] = {
@@ -177,10 +177,10 @@ COMController_t::COMController_t()
                                 (uint8_t)(data.maxsize >> 8),
                                 (uint8_t)(data.maxsize >> 16),
                                 (uint8_t)(data.maxsize >> 24),
-                                (uint8_t)(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceWidth),
-                                (uint8_t)(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceWidth >> 8),
-                                (uint8_t)(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceHeight),
-                                (uint8_t)(std::get<SYSC::VideoSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceHeight >> 8),
+                                (uint8_t)(std::get<SYSC::CameraSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceWidth),
+                                (uint8_t)(std::get<SYSC::CameraSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceWidth >> 8),
+                                (uint8_t)(std::get<SYSC::CameraSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceHeight),
+                                (uint8_t)(std::get<SYSC::CameraSettings>(SYSU::StreamStatus.VideoIFlowRaw[SYSC::CommonConfig.COM_CastFrameIndex]).DeviceHeight >> 8),
                             };
 
                             Injector->WIFICastInject(ImgInfo, sizeof(ImgInfo), 0, BroadCastType::DataStream, 0, 0xf, 0xff);
@@ -198,7 +198,7 @@ COMController_t::COMController_t()
                     }
                     COMBoradCastDataInject();
                 },
-                (float)SYSC::VideoConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS));
+                (float)SYSC::CameraConfig[SYSC::CommonConfig.COM_CastFrameIndex].DeviceFPS));
 
             RecvcastThread.reset(new FlowThread(
                 [&]

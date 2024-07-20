@@ -24,8 +24,7 @@ namespace RuAPSSys
 #ifdef MODULE_APM
 		inline static struct SingleAPMAPI::APMSettinngs APMConfig;
 #endif
-
-		struct VideoSettings
+		struct CameraSettings
 		{
 			std::string DevicePATH;
 			std::string DeviceDriver;
@@ -36,7 +35,12 @@ namespace RuAPSSys
 			int DeviceFPS;
 			bool enable;
 		};
-		inline static std::vector<VideoSettings> VideoConfig;
+
+		inline static struct VideoSettings
+		{
+			std::string V4L2Encoder;
+		} VideoConfig;
+		inline static std::vector<CameraSettings> CameraConfig;
 
 		inline static struct CommonSettings
 		{
@@ -92,7 +96,7 @@ namespace RuAPSSys
 
 		inline static struct StreamStatus_t
 		{
-			std::vector<std::tuple<FrameBuffer<V4L2Tools::V4l2Data>, ConfigCLA::VideoSettings>> VideoIFlowRaw;
+			std::vector<std::tuple<FrameBuffer<V4L2Tools::V4l2Data>, ConfigCLA::CameraSettings>> VideoIFlowRaw;
 		} StreamStatus;
 
 		inline static struct SystemStatus_t
@@ -109,7 +113,7 @@ namespace RuAPSSys
 
 namespace RuAPSSys
 {
-	void to_json(json &j, const ConfigCLA::VideoSettings &p)
+	void to_json(json &j, const ConfigCLA::CameraSettings &p)
 	{
 		j = json{
 			{"DevicePATH", p.DevicePATH},
@@ -121,7 +125,7 @@ namespace RuAPSSys
 			{"enable", p.enable},
 		};
 	}
-	void from_json(const json &j, ConfigCLA::VideoSettings &p)
+	void from_json(const json &j, ConfigCLA::CameraSettings &p)
 	{
 		j.at("DevicePATH").get_to(p.DevicePATH);
 		j.at("DeviceDriver").get_to(p.DeviceDriver);
@@ -197,7 +201,10 @@ namespace RuAPSSys
 #ifdef MODULE_APM
 		ConfigCLA::APMConfig = SingleAPMAPI::readConfigFromJson(Container["APMConfig"]);
 #endif
-		ConfigCLA::VideoConfig = Container["VideoConfig"]["Device"].get<std::vector<ConfigCLA::VideoSettings>>();
+		//
+		ConfigCLA::VideoConfig.V4L2Encoder = Container["VideoConfig"]["V4L2Encoder"].get<std::string>();
+		ConfigCLA::CameraConfig = Container["VideoConfig"]["Device"].get<std::vector<ConfigCLA::CameraSettings>>();
+		//
 		ConfigCLA::CommonConfig = Container["CommonConfig"].get<ConfigCLA::CommonSettings>();
 		return; // just for breakpoint
 	};

@@ -60,23 +60,23 @@ private:
 VIDController_t::VIDController_t()
 {
     // Step 1. Sync and Setup config
-    for (size_t i = 0; i < SYSC::VideoConfig.size(); i++)
+    for (size_t i = 0; i < SYSC::CameraConfig.size(); i++)
     {
-        if (SYSC::VideoConfig[i].enable)
+        if (SYSC::CameraConfig[i].enable)
         {
             std::unique_ptr<V4L2Tools::V4L2Drive> V4L2P;
             try
             {
                 V4L2P.reset(
                     new V4L2Tools::V4L2Drive(
-                        SYSC::VideoConfig[i].DevicePATH,
+                        SYSC::CameraConfig[i].DevicePATH,
                         {
-                            .ImgWidth = SYSC::VideoConfig[i].DeviceWidth,
-                            .ImgHeight = SYSC::VideoConfig[i].DeviceHeight,
-                            .FrameRate = SYSC::VideoConfig[i].DeviceFPS,
+                            .ImgWidth = SYSC::CameraConfig[i].DeviceWidth,
+                            .ImgHeight = SYSC::CameraConfig[i].DeviceHeight,
+                            .FrameRate = SYSC::CameraConfig[i].DeviceFPS,
                             .FrameBuffer = MAXV4LBUF,
-                            .Is_AutoSize = (SYSC::VideoConfig[i].DeviceWidth < 0),
-                            .PixFormat = V4L2Format_s.at(SYSC::VideoConfig[i].DeviceIFormat),
+                            .Is_AutoSize = (SYSC::CameraConfig[i].DeviceWidth < 0),
+                            .PixFormat = V4L2Format_s.at(SYSC::CameraConfig[i].DeviceIFormat),
                             .H264_PSize = SYSC::CommonConfig.COM_BroadCastPFrameSize,
                             .H264_Profile = V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE,
                             .H264_Bitrate = SYSC::CommonConfig.COM_BroadCastBitRate,
@@ -85,7 +85,7 @@ VIDController_t::VIDController_t()
 
                 FrameBuffer<V4L2Tools::V4l2Data> Data;
                 SYSU::StreamStatus.VideoIFlowRaw.push_back(
-                    std::make_tuple(std::move(Data), SYSC::VideoConfig[i]));
+                    std::make_tuple(std::move(Data), SYSC::CameraConfig[i]));
 
                 V4L2Driver.push_back(std::move(V4L2P));
             }
