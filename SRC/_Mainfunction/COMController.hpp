@@ -14,7 +14,7 @@
 
 #ifdef MODULE_FECLIB
 #include "../_Excutable/FEC/fec.hpp"
-#define FEC_PACKET_MAX 32
+#define FEC_PACKET_MAX 64
 #define FEC_DATA_MAX (FEC_PACKET_MAX * PacketPrePacks)
 #endif
 
@@ -64,6 +64,9 @@ private:
     std::queue<FFMPEGTools::AVData> EncoderQueue;
     std::unique_ptr<FFMPEGTools::FFMPEGCodec> Encoder;
 #endif
+    //
+    FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> fecPool;
+    FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> dataPool;
     //
     std::unique_ptr<V4L2Tools::V4L2Encoder> V4L2Enc;
 };
@@ -116,6 +119,8 @@ COMController_t::COMController_t()
 
             // TODO: better way network control
             char cmd[64];
+            sprintf(cmd, "ifconfig %s up", SYSC::CommonConfig.BroadcastInterfaces[0].c_str());
+            system(cmd);
             sprintf(cmd, "iw dev %s set type monitor", SYSC::CommonConfig.BroadcastInterfaces[0].c_str());
             system(cmd);
             sprintf(cmd, "iw dev %s set monitor fcsfail otherbss", SYSC::CommonConfig.BroadcastInterfaces[0].c_str());
@@ -253,22 +258,23 @@ void COMController_t::VideoDataInject(uint8_t *data, int size)
 
 #ifdef MODULE_FECLIB
     InjectFSize = size + 4; // NO CRC32, why using CRC for FEC? Update: yes, just fec the crc data, after fix can use it
-    InjectFTarget.reset(new uint8_t[InjectFSize]);
-    //
-    FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> fecPool;
-    FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> dataPool;
-    std::memset(fecPool.FecDataType_t.data1d, 0x00, FEC_DATA_MAX);
-    std::memset(dataPool.FecDataType_t.data1d, 0x00, FEC_DATA_MAX);
-    //
-    std::copy(InjectVTarget.get(), InjectVTarget.get() + InjectFSize, dataPool.FecDataType_t.data1d);
-    fec_encode(PacketPrePacks, dataPool.dataout, packetSize, fecPool.dataout, packetSize);
-    std::copy(fecPool.FecDataType_t.data1d, fecPool.FecDataType_t.data1d + InjectFSize, InjectFTarget.get());
+    if (InjectFSize < FEC_DATA_MAX)
+    {
+        InjectFTarget.reset(new uint8_t[InjectFSize]);
+        //
+        std::memset(fecPool.FecDataType_t.data1d, 0x00, FEC_DATA_MAX);
+        std::memset(dataPool.FecDataType_t.data1d, 0x00, FEC_DATA_MAX);
+        //
+        std::copy(InjectVTarget.get(), InjectVTarget.get() + InjectFSize, dataPool.FecDataType_t.data1d);
+        fec_encode(PacketPrePacks, dataPool.dataout, packetSize, fecPool.dataout, packetSize);
+        std::copy(fecPool.FecDataType_t.data1d, fecPool.FecDataType_t.data1d + InjectFSize, InjectFTarget.get());
 
-    Injector->WIFICastInject(fecPool.FecDataType_t.data1d,
-                             InjectFSize, // FIXME: FEC frame same as data frame? now test with full fec out
-                             0, BroadCastType::VideoStream, 0,
-                             SYSC::CommonConfig.COM_CastFrameIndex * 2 + 1,
-                             FrameFECSyncID);
+        Injector->WIFICastInject(fecPool.FecDataType_t.data1d,
+                                 InjectFSize, // FIXME: FEC frame same as data frame? now test with full fec out
+                                 0, BroadCastType::VideoStream, 0,
+                                 SYSC::CommonConfig.COM_CastFrameIndex * 2 + 1,
+                                 FrameFECSyncID);
+    }
 #endif
 }
 

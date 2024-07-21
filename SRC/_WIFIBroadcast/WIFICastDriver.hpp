@@ -87,7 +87,7 @@ namespace WIFIBroadCast
             // Auto Complete by driver or kerenl
             // TODO: must set data rate or defaultly run in 6mbps
             const uint8_t RadioInfo[16] = {
-                0x00, 0x30, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x48, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
             // Frame Control field and Duration
             const uint8_t Data80211Info[4] = {
@@ -212,11 +212,11 @@ int WIFIBroadCast::WIFICastDriver::WIFICastInject(uint8_t *data, int len, int In
             int size = ((PacketPrePacks) - (PacketSize * (PacketPrePacks)-len));
             //
             if (type == BroadCastType::VideoStream)
-                tmpData[((size + HeaderSize + 1))] = FrameQueueID << 5 | 0x1f;
+                tmpData[((size + HeaderSize + 1))] = FrameQueueID << 6 | 0x3f;
             if (type == BroadCastType::DataStream)
-                tmpData[((size + HeaderSize + 1))] = FrameQueueID << 5 | 0x1f;
+                tmpData[((size + HeaderSize + 1))] = FrameQueueID << 6 | 0x3f;
             // TODO: adding extra id frame locator
-            tmpData[((size + HeaderSize))] = FrameMarking << 5 | (uint8_t)PacketSize;
+            tmpData[((size + HeaderSize))] = FrameMarking << 6 | (uint8_t)PacketSize;
             //
             tmpData[FrameTypeL - 1] = (size + HeaderSize + 2);
             tmpData[FrameTypeL - 2] = (size + HeaderSize + 2) >> 8;
@@ -228,13 +228,13 @@ int WIFIBroadCast::WIFICastDriver::WIFICastInject(uint8_t *data, int len, int In
         }
         else
         {
-            // TODO: adding frame count up to 5bit, left 8 / 2 channel
+            // TODO: adding frame count up to 6bit, left 4 / 2 channel
             if (type == BroadCastType::VideoStream)
-                tmpData[(SocketMTU + 1)] = FrameQueueID << 5 | FrameCounter68;
+                tmpData[(SocketMTU + 1)] = FrameQueueID << 6 | FrameCounter68;
             if (type == BroadCastType::DataStream)
-                tmpData[(SocketMTU + 1)] = FrameQueueID << 5 | FrameCounter69;
+                tmpData[(SocketMTU + 1)] = FrameQueueID << 6 | FrameCounter69;
             // TODO: adding extra id frame locator
-            tmpData[(SocketMTU)] = FrameMarking << 5 | (uint8_t)PacketSize;
+            tmpData[(SocketMTU)] = FrameMarking << 6 | (uint8_t)PacketSize;
             //
             tmpData[(FrameTypeL - 1)] = (uint8_t)(SocketMTU + 2);
             tmpData[(FrameTypeL - 2)] = (uint8_t)((SocketMTU + 2) >> 8);
@@ -247,13 +247,13 @@ int WIFIBroadCast::WIFICastDriver::WIFICastInject(uint8_t *data, int len, int In
         if (type == BroadCastType::VideoStream && PacketSize - 1 != i)
         {
             FrameCounter68++;
-            if (FrameCounter68 >= 0x1f)
+            if (FrameCounter68 >= 0x3f)
                 FrameCounter68 = 0x0;
         }
         else if (type == BroadCastType::DataStream && PacketSize - 1 != i)
         {
             FrameCounter69++;
-            if (FrameCounter69 >= 0x1f)
+            if (FrameCounter69 >= 0x3f)
                 FrameCounter69 = 0x0;
         }
     }
@@ -286,7 +286,7 @@ void WIFIBroadCast::WIFICastDriver::WIFIRecvSinff(std::function<void(VideoPacket
             int LocateID = -1;
             bool PacketNotReg = true;
             // check pack is regsitered and match what we want
-            VideoPackets *videoTarget;
+            VideoPackets *videoTarget = NULL;
             for (size_t i = 0; i < VideoPacketsBuffer.size(); i++)
                 if (VideoPacketsBuffer[i].vps.info.frameID == FramestreamID)
                 {
