@@ -2,9 +2,7 @@
     "configurations": [
         {
             "name": "Linux",
-            "includePath": [
-                "${workspaceFolder}/**"
-            ],
+            "includePath": [],
             "forcedInclude": [
                 "${workspaceFolder}/.vscode/eigen_fix.h"
             ],
