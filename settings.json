@@ -9,9 +9,5 @@
     "custom.extenalcmd": "scp APMconfig.json root@192.168.6.56:/etc/",
     "custom.targetdir": "/usr/bin/",
     "custom.runwith": " ",
-    "cmake.configureArgs": [
-        "-DMPUDriver=spidev",
-        "-DFULLSTATIC=true",
-        "-DOPENWRT=true"
-    ],
+    "cmake.configureArgs": [],
 }
