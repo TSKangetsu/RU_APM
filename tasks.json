@@ -73,6 +73,48 @@
                 "${config:custom.extenalcmd}",
                 "${config:custom.targetdir}",
                 "${config:custom.runwith}",
+                "2",
+            ],
+            "dependsOn": [
+                "cbuild"
+            ],
+            "isBackground": true,
+            "presentation": {
+                "clear": true,
+            },
+            "problemMatcher": [
+                {
+                    "pattern": [
+                        {
+                            "regexp": ".",
+                            "file": 1,
+                            "location": 2,
+                            "message": 3
+                        }
+                    ],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": ".",
+                        "endsPattern": ".",
+                    }
+                }
+            ]
+        },
+        {
+            "label": "SendOnly",
+            "type": "shell",
+            "command": "bash",
+            "group": "build",
+            "args": [
+                "${workspaceFolder}/.vscode/remote.sh",
+                "${config:custom.user}",
+                "${config:custom.ipaddress}",
+                "${config:custom.exe}",
+                "${config:custom.exeargs}",
+                "${config:custom.proxyext}",
+                "${config:custom.extenalcmd}",
+                "${config:custom.targetdir}",
+                "${config:custom.runwith}"
             ],
             "dependsOn": [
                 "cbuild"
