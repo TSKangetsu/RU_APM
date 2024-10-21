@@ -19,6 +19,7 @@ enum VideoFormat
 {
     YUYV,
     YUV420,
+    NV12,
     BGR3,
     H264,
     H265,
@@ -29,6 +30,7 @@ inline static const std::map<std::string, VideoFormat> VideoFormat_s =
     {
         {EMAP(YUYV), YUYV},
         {EMAP(YUV420), YUV420},
+        {EMAP(NV12), NV12},
         {EMAP(BGR3), BGR3},
         {EMAP(H264), H264},
         {EMAP(H265), H265},
@@ -39,6 +41,7 @@ inline static const std::map<std::string, unsigned int> V4L2Format_s =
     {
         {EMAP(YUYV), V4L2_PIX_FMT_YUYV},
         {EMAP(YUV420), V4L2_PIX_FMT_YUV420},
+        {EMAP(NV12), V4L2_PIX_FMT_NV12},
         {EMAP(BGR3), V4L2_PIX_FMT_BGR24},
         {EMAP(H264), V4L2_PIX_FMT_H264},
         {EMAP(H265), V4L2_PIX_FMT_HEVC},

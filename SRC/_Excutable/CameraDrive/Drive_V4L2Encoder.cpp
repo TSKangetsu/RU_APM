@@ -234,7 +234,10 @@ retry:
             v4l2.CameraFormat.fmt.pix.bytesperline);
 
     if (ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer) == 11)
+    {
+        usleep(10 * 1000); // FIXME: AVOID EXPLORTION
         goto retry;
+    }
 
     std::copy(VdataIn.data,
               VdataIn.data + VdataIn.size,
@@ -269,7 +272,10 @@ retry2:
     tv.tv_usec = 0;
     r = select(_flag_CameraFD + 1, &fds, NULL, NULL, &tv);
     if (ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBufferOut) == 11)
+    {
+        usleep(10 * 1000); // FIXME: AVOID EXPLORTION
         goto retry2;
+    }
     VdataOut.bytesperline = v4l2.CameraFormatOut.fmt.pix.bytesperline;
     if (isMPlaneSupported)
         VdataOut.size = v4l2.CameraBufferOut.m.planes->bytesused;
