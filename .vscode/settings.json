@@ -1,6 +1,6 @@
 {
     "custom.user": "pi",
-    "custom.ipaddress": "192.168.248.27",
+    "custom.ipaddress": "192.168.248.6",
     "custom.gdbserverPort": "9590",
     "custom.gdb": "aarch64-openwrt-linux-gdb",
     "custom.exe": "RuAPM_Cli",
@@ -12,7 +12,7 @@
     "cmake.configureArgs": [
         "-DMPUDriver=spidev",
         "-DFULLSTATIC=true",
-        "-DOPENWRT=false",
+        "-DOPENWRT=true",
         "-DMODULE_FFMPEG=false",
         "-DMODULE_APM=true",
         "-DMODULE_FECLIB=true"

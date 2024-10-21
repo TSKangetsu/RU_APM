@@ -111,12 +111,23 @@ namespace V4L2Tools
     {
     public:
         V4L2Drive(std::string Device, V4l2Info Info);
-        void V4L2Read(V4L2Tools::V4l2Data &Vdata);
+        virtual void V4L2Read(V4L2Tools::V4l2Data &Vdata);
 
         int V4L2FDGetter() { return _flag_CameraFD; };
         bool V4L2Control(unsigned int id, int value);
 
-        ~V4L2Drive();
+        inline V4l2Data V4l2DataGet()
+        {
+            return V4L2Tools::V4l2Data(
+                v4l2d.ImgWidth,
+                v4l2d.ImgHeight,
+                isMPlaneSupported ? v4l2.CameraQBuffer.m.planes->length : v4l2.CameraQBuffer.length,
+                isMPlaneSupported ? v4l2.CameraQBuffer.m.planes->length : v4l2.CameraQBuffer.length,
+                v4l2d.PixFormat,
+                v4l2.CameraFormat.fmt.pix.bytesperline);
+        }
+
+        virtual ~V4L2Drive();
 
     protected:
         V4L2Drive() {}; // empty for encoder
@@ -129,7 +140,7 @@ namespace V4L2Tools
         int _flag_CameraFD;
         std::string _flag_TargetDevice;
         V4l2Info v4l2d;
-
+        bool isMPlaneSupported = true;
         struct V4l2Dep
         {
             v4l2_control CameraContorl;
@@ -147,10 +158,47 @@ namespace V4L2Tools
         } v4l2;
     };
 
-    class V4L2Encoder : private V4L2Drive
+    class V4L2Encoder : public V4L2Drive
     {
     public:
-        V4L2Encoder(std::string Device, V4l2Info Info);
+        V4L2Encoder(std::string Device, V4l2Info Info, bool isgeter = false);
         void V4L2EncodeSet(V4L2Tools::V4l2Data &VdataIn, V4L2Tools::V4l2Data &VdataOut);
+
+        // just don't call it, add compile time check
+        template <typename T = bool>
+        void V4L2Read(V4L2Tools::V4l2Data &Vdata) { static_assert(fail<T>::value, "don't use it in M2M"); }
+
+        inline V4l2Data V4l2DataGetOut()
+        {
+            return V4L2Tools::V4l2Data(
+                v4l2d.ImgWidth,
+                v4l2d.ImgHeight,
+                isMPlaneSupported ? v4l2.CameraQBufferOut.m.planes->length : v4l2.CameraQBufferOut.length,
+                isMPlaneSupported ? v4l2.CameraQBufferOut.m.planes->length : v4l2.CameraQBufferOut.length,
+                v4l2d.PixFormatOut,
+                v4l2.CameraFormatOut.fmt.pix.bytesperline);
+        }
+
+        ~V4L2Encoder() {};
+
+    private:
+        template <typename T>
+        struct fail : std::false_type
+        {
+            // just for failed compile time
+        };
     };
+
+    // will use PixFormat for alloc, don't alloc it with PixFormatOut
+    // template <typename T>
+    // inline V4l2Data V4l2DataFill(T v4l2dev)
+    // {
+    //     return V4L2Tools::V4l2Data(
+    //         v4l2dev.v4l2d.ImgWidth,
+    //         v4l2dev.v4l2d.ImgHeight,
+    //         v4l2dev.isMPlaneSupported ? v4l2dev.v4l2.CameraQBuffer.m.planes->length : v4l2dev.v4l2.CameraQBuffer.length,
+    //         v4l2dev.isMPlaneSupported ? v4l2dev.v4l2.CameraQBuffer.m.planes->length : v4l2dev.v4l2.CameraQBuffer.length,
+    //         v4l2dev.v4l2d.PixFormat,
+    //         v4l2dev.v4l2.CameraFormat.fmt.pix.bytesperline);
+    // }
 } // namespace V4L2Tools

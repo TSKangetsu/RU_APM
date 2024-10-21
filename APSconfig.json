@@ -8,7 +8,7 @@
             "MPU9250_Type": 1,
             "RC_Type": 2,
             "RXT_Freqeuncy": 500,
-            "_IsBAROEnable": false,
+            "_IsBAROEnable": true,
             "_IsBlackBoxEnable": true,
             "_IsFlowEnable": false,
             "_IsGPSEnable": false,
