@@ -68,3 +68,8 @@ add_executable(RuAPM_Cli SRC/Launch.cpp ${v4l2} ${fec} "$<$<BOOL:${MODULE_FFMPEG
 target_link_libraries(RuAPM_Cli  "$<$<BOOL:${MODULE_APM}>:RPiSingleAPI>" )
 target_link_libraries(RuAPM_Cli Threads::Threads)
 target_link_libraries(RuAPM_Cli "$<$<BOOL:${MODULE_FFMPEG}>:${AV_Tool_LIB}>")
+
+IF(OPENWRT)
+    target_link_libraries(RuAPM_Cli gcc_pic) # this option must link with musl in openwrt
+ENDIF()
+
