@@ -114,14 +114,17 @@ void VIDController_t::VideoISLoader()
         VideoIThread.reset(new FlowThread(
             [&, s = i]()
             {
-                if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s])
+                if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
+                        SYSU::StreamStatus.VideoIFlowRaw[s])
                         .frameCount > MAXBUFFER)
-                    std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s])
+                    std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
+                        SYSU::StreamStatus.VideoIFlowRaw[s])
                         .getFrame();
 
                 // FIXME: WARRNING! dangerous cpu usage with alloc, consider pointer instead of copy
                 V4L2Driver[s]->V4L2Read(SYSU::StreamStatus.DataBufffer[s]);
-                std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s])
+                std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
+                    SYSU::StreamStatus.VideoIFlowRaw[s])
                     .pushFrame(SYSU::StreamStatus.DataBufffer[s]);
             },
             (float)SYSC::CameraConfig[i].DeviceFPS));

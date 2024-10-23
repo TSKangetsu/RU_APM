@@ -45,6 +45,9 @@ public:
     ~COMController_t();
 
 private:
+    V4L2Tools::V4l2Data comInVdata;
+    V4L2Tools::V4l2Data comInVdataOut;
+
     void VideoDataInject(uint8_t *data, int size);
     void COMBoradCastDataInject();
     //
@@ -172,8 +175,7 @@ COMController_t::COMController_t()
                 [&]()
                 {
                     // Step 0. Target Video data
-                    V4L2Tools::V4l2Data data;
-                    V4L2Tools::V4l2Data dataOut;
+
                     size_t InjectVSize = 0;
                     std::shared_ptr<uint8_t> InjectVTarget;
                     // Step 1. Read From uorb
@@ -181,12 +183,12 @@ COMController_t::COMController_t()
                             SYSU::StreamStatus.VideoIFlowRaw
                                 [SYSC::CommonConfig.COM_CastFrameIndex])
                             .frameCount > 0)
-                        data = std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
+                        comInVdata = std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                                    SYSU::StreamStatus.VideoIFlowRaw
                                        [SYSC::CommonConfig.COM_CastFrameIndex])
                                    .peekFrame();
                     // Step 2. Transcodec or not, deal with VID data
-                    if (data.size > 0)
+                    if (comInVdata.size > 0)
                     {
                         // TODO: consider add a timestamp binding EFC and data
                         if (std::get<SYSC::CameraSettings>(
@@ -198,23 +200,23 @@ COMController_t::COMController_t()
                                     [SYSC::CommonConfig.COM_CastFrameIndex])
                                     .DeviceIFormat == "H265")
                         {
-                            VideoDataInject(data.data, data.size);
+                            VideoDataInject(comInVdata.data.get(), comInVdata.size);
                         }
                         else
                         {
 #ifdef MODULE_FFMPEG
-                            Encoder->pushFrame(data.data, data.size, data.bytesperline);
+                            Encoder->pushFrame(comInVdata.data.get(), comInVdata.size, comInVdata.bytesperline);
                             Encoder->getFrame(EncoderQueue);
                             //
                             for (; !EncoderQueue.empty(); EncoderQueue.pop())
                             {
-                                VideoDataInject(EncoderQueue.front().data,
+                                VideoDataInject(EncoderQueue.front().comInVdata.get(),
                                                 EncoderQueue.front().size);
                             }
 #else
                             // TODO: V4L2ENC support
-                            V4L2Enc->V4L2EncodeSet(data, dataOut);
-                            VideoDataInject(dataOut.data, dataOut.size);
+                            V4L2Enc->V4L2EncodeSet(comInVdata, comInVdataOut);
+                            VideoDataInject(comInVdataOut.data.get(), comInVdataOut.size);
 #endif
                         }
 
@@ -228,10 +230,10 @@ COMController_t::COMController_t()
                             BroadCastDataCount = 0;
                             uint8_t ImgInfo[] = {
                                 (uint8_t)(SYSC::CommonConfig.COM_CastFrameIndex),
-                                (uint8_t)(data.maxsize),
-                                (uint8_t)(data.maxsize >> 8),
-                                (uint8_t)(data.maxsize >> 16),
-                                (uint8_t)(data.maxsize >> 24),
+                                (uint8_t)(comInVdata.maxsize),
+                                (uint8_t)(comInVdata.maxsize >> 8),
+                                (uint8_t)(comInVdata.maxsize >> 16),
+                                (uint8_t)(comInVdata.maxsize >> 24),
                                 (uint8_t)(std::get<SYSC::CameraSettings>(
                                               SYSU::StreamStatus.VideoIFlowRaw
                                                   [SYSC::CommonConfig.COM_CastFrameIndex])

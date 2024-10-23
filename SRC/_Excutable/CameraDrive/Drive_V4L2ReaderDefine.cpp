@@ -167,7 +167,7 @@ void V4L2Tools::V4L2Drive::V4L2Read(V4L2Tools::V4l2Data &Vdata)
         Vdata.size = v4l2.CameraBuffer.bytesused;
         std::copy((unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index],
                   (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index] + Vdata.size,
-                  Vdata.data);
+                  Vdata.data.get());
         V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_camread_error);
     }
     else

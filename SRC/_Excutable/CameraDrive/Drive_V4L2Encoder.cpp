@@ -239,8 +239,8 @@ retry:
         goto retry;
     }
 
-    std::copy(VdataIn.data,
-              VdataIn.data + VdataIn.size,
+    std::copy(VdataIn.data.get(),
+              VdataIn.data.get() + VdataIn.size,
               (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index]);
 
     if (isMPlaneSupported)
@@ -283,6 +283,6 @@ retry2:
         VdataOut.size = v4l2.CameraBufferOut.bytesused;
     std::copy((unsigned char *)v4l2BuffersOut[v4l2.CameraBufferOut.index],
               (unsigned char *)v4l2BuffersOut[v4l2.CameraBufferOut.index] + VdataOut.size,
-              VdataOut.data);
+              VdataOut.data.get());
     ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBufferOut);
 }

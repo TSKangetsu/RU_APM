@@ -42,7 +42,7 @@ namespace V4L2Tools
         int maxsize;
         unsigned int size;
         unsigned int pixfmt;
-        unsigned char *data;
+        std::shared_ptr<unsigned char> data;
         unsigned int bytesperline;
         //
         V4l2Data() : width(0), height(0), maxsize(0), size(0), pixfmt(0), data(nullptr), bytesperline(0) {};
@@ -58,7 +58,7 @@ namespace V4L2Tools
             this->size = size;
             this->maxsize = maxsize;
             this->pixfmt = pixfmt;
-            this->data = new unsigned char[this->size];
+            this->data.reset(new unsigned char[this->size]);
             this->bytesperline = bytesperline;
 
 #ifdef DEBUG
@@ -72,13 +72,10 @@ namespace V4L2Tools
             size = DataCpy.size;
             maxsize = DataCpy.maxsize;
             pixfmt = DataCpy.pixfmt;
-            data = new unsigned char[size];
-            std::copy(DataCpy.data, DataCpy.data + size, this->data);
+            data.reset(new unsigned char[size]);
+            std::copy(DataCpy.data.get(), DataCpy.data.get() + size, this->data.get());
             bytesperline = DataCpy.bytesperline;
 
-#ifdef DEBUG
-            std::cout << "\033[33m[V4L2Info] V4L2 alloc dataBuffer check copy op" << "\n";
-#endif
 
             return *this;
         };
@@ -90,19 +87,14 @@ namespace V4L2Tools
             size = DataCpy.size;
             maxsize = DataCpy.maxsize;
             pixfmt = DataCpy.pixfmt;
-            data = new unsigned char[size];
-            std::copy(DataCpy.data, DataCpy.data + size, this->data);
+            data = DataCpy.data;
             bytesperline = DataCpy.bytesperline;
 
-#ifdef DEBUG
-            std::cout << "\033[33m[V4L2Info] V4L2 alloc dataBuffer check copy" << "\n";
-#endif
         };
 
         ~V4l2Data()
         {
-            if (data != nullptr)
-                delete[] data;
+            data.reset();
         };
     };
 
