@@ -60,6 +60,10 @@ namespace V4L2Tools
             this->pixfmt = pixfmt;
             this->data = new unsigned char[this->size];
             this->bytesperline = bytesperline;
+
+#ifdef DEBUG
+            std::cout << "\033[33m[V4L2Info] V4L2 alloc dataBuffer check" << "\n";
+#endif
         };
         V4l2Data &operator=(const V4l2Data &DataCpy)
         {
@@ -71,8 +75,14 @@ namespace V4L2Tools
             data = new unsigned char[size];
             std::copy(DataCpy.data, DataCpy.data + size, this->data);
             bytesperline = DataCpy.bytesperline;
+
+#ifdef DEBUG
+            std::cout << "\033[33m[V4L2Info] V4L2 alloc dataBuffer check copy op" << "\n";
+#endif
+
             return *this;
         };
+
         V4l2Data(const V4l2Data &DataCpy)
         {
             width = DataCpy.width;
@@ -83,7 +93,12 @@ namespace V4L2Tools
             data = new unsigned char[size];
             std::copy(DataCpy.data, DataCpy.data + size, this->data);
             bytesperline = DataCpy.bytesperline;
+
+#ifdef DEBUG
+            std::cout << "\033[33m[V4L2Info] V4L2 alloc dataBuffer check copy" << "\n";
+#endif
         };
+
         ~V4l2Data()
         {
             if (data != nullptr)
@@ -140,6 +155,7 @@ namespace V4L2Tools
         int _flag_CameraFD;
         std::string _flag_TargetDevice;
         V4l2Info v4l2d;
+        V4l2Data v4l2preData;
         bool isMPlaneSupported = true;
         struct V4l2Dep
         {

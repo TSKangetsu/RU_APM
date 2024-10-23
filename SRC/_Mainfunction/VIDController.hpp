@@ -90,6 +90,9 @@ VIDController_t::VIDController_t()
                 SYSU::StreamStatus.VideoIFlowRaw.push_back(
                     std::make_tuple(std::move(Data), SYSC::CameraConfig[i]));
 
+                V4L2Tools::V4l2Data vdata;
+                SYSU::StreamStatus.DataBufffer.push_back(vdata);
+
                 V4L2Driver.push_back(std::move(V4L2P));
             }
             catch (int &e)
@@ -111,13 +114,17 @@ void VIDController_t::VideoISLoader()
         VideoIThread.reset(new FlowThread(
             [&, s = i]()
             {
-                if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).frameCount > MAXBUFFER)
-                    std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).getFrame();
+                if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s])
+                        .frameCount > MAXBUFFER)
+                    std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s])
+                        .getFrame();
 
-                V4L2Tools::V4l2Data data;
-                V4L2Driver[s]->V4L2Read(data);
-                std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s]).pushFrame(data);
-            }));
+                // FIXME: WARRNING! dangerous cpu usage with alloc, consider pointer instead of copy
+                V4L2Driver[s]->V4L2Read(SYSU::StreamStatus.DataBufffer[s]);
+                std::get<FrameBuffer<V4L2Tools::V4l2Data>>(SYSU::StreamStatus.VideoIFlowRaw[s])
+                    .pushFrame(SYSU::StreamStatus.DataBufffer[s]);
+            },
+            (float)SYSC::CameraConfig[i].DeviceFPS));
 
         VideoISThread.push_back(std::move(VideoIThread));
     }

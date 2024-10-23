@@ -96,6 +96,7 @@ namespace RuAPSSys
 
 		inline static struct StreamStatus_t
 		{
+			std::vector<V4L2Tools::V4l2Data> DataBufffer;
 			std::vector<std::tuple<FrameBuffer<V4L2Tools::V4l2Data>, ConfigCLA::CameraSettings>> VideoIFlowRaw;
 		} StreamStatus;
 
