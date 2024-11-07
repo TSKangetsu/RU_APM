@@ -36,12 +36,13 @@ namespace RuAPSSys
 		{
 			// Step 1. Read Config from /boot/APSconfig.json.
 			RuAPSSys::ConfigFileSync(FileConfigTarget);
-// Step 2. Load up SingleController.
 #ifdef MODULE_APM
+			// Step 2. Load up SingleController.
 			APMController.reset(new APMController_t());
 #endif
 			// Step 3. Load up Camera System.
 			VIDController.reset(new VIDController_t());
+			
 			// Step 4. Load up Message and VideoStream BoradCast;
 			COMController.reset(new COMController_t());
 			// ...

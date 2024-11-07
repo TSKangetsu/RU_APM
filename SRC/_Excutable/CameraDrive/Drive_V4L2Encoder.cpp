@@ -233,11 +233,7 @@ retry:
             v4l2d.PixFormat,
             v4l2.CameraFormat.fmt.pix.bytesperline);
 
-    if (ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer) == 11)
-    {
-        usleep(10 * 1000); // FIXME: AVOID EXPLORTION
-        goto retry;
-    }
+    ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer);
 
     std::copy(VdataIn.data.get(),
               VdataIn.data.get() + VdataIn.size,
@@ -250,6 +246,7 @@ retry:
         v4l2.CameraBuffer.length = VdataIn.maxsize;
         v4l2.CameraBuffer.bytesused = VdataIn.size;
     }
+    //
     ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer);
     //=========================================================================================//
 
@@ -271,11 +268,9 @@ retry2:
     tv.tv_sec = 1; // TODO: fix loop logic
     tv.tv_usec = 0;
     r = select(_flag_CameraFD + 1, &fds, NULL, NULL, &tv);
-    if (ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBufferOut) == 11)
-    {
-        usleep(10 * 1000); // FIXME: AVOID EXPLORTION
-        goto retry2;
-    }
+
+    ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBufferOut);
+
     VdataOut.bytesperline = v4l2.CameraFormatOut.fmt.pix.bytesperline;
     if (isMPlaneSupported)
         VdataOut.size = v4l2.CameraBufferOut.m.planes->bytesused;
