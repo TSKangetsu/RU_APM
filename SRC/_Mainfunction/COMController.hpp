@@ -67,9 +67,11 @@ private:
     std::queue<FFMPEGTools::AVData> EncoderQueue;
     std::unique_ptr<FFMPEGTools::FFMPEGCodec> Encoder;
 #endif
-    //
+//
+#ifdef MODULE_FECLIB
     FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> fecPool;
     FecPacket<FEC_DATA_MAX, FEC_PACKET_MAX, PacketPrePacks> dataPool;
+#endif
     //
     std::unique_ptr<V4L2Tools::V4L2Encoder> V4L2Enc;
 };
@@ -184,9 +186,9 @@ COMController_t::COMController_t()
                                 [SYSC::CommonConfig.COM_CastFrameIndex])
                             .frameCount > 0)
                         comInVdata = std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
-                                   SYSU::StreamStatus.VideoIFlowRaw
-                                       [SYSC::CommonConfig.COM_CastFrameIndex])
-                                   .peekFrame();
+                                         SYSU::StreamStatus.VideoIFlowRaw
+                                             [SYSC::CommonConfig.COM_CastFrameIndex])
+                                         .peekFrame();
                     // Step 2. Transcodec or not, deal with VID data
                     if (comInVdata.size > 0)
                     {
@@ -216,7 +218,8 @@ COMController_t::COMController_t()
 #else
                             // TODO: V4L2ENC support
                             V4L2Enc->V4L2EncodeSet(comInVdata, comInVdataOut);
-                            VideoDataInject(comInVdataOut.data.get(), comInVdataOut.size);
+                            if (comInVdataOut.size != comInVdataOut.maxsize) // FIXME: if data in max, H264 data is empty
+                                VideoDataInject(comInVdataOut.data.get(), comInVdataOut.size);
 #endif
                         }
 
