@@ -69,14 +69,19 @@ namespace V4L2Tools
         {
             width = DataCpy.width;
             height = DataCpy.height;
-            size = DataCpy.size;
             maxsize = DataCpy.maxsize;
             pixfmt = DataCpy.pixfmt;
-            data.reset(new unsigned char[size]);
-            std::copy(DataCpy.data.get(), DataCpy.data.get() + size, this->data.get());
+            if (size <= 0)
+            {
+                size = DataCpy.size;
+                data.reset(new unsigned char[size]);
+            }
+            else
+            {
+                size = DataCpy.size;
+                std::copy(DataCpy.data.get(), DataCpy.data.get() + size, this->data.get());
+            }
             bytesperline = DataCpy.bytesperline;
-
-
             return *this;
         };
 
@@ -89,7 +94,6 @@ namespace V4L2Tools
             pixfmt = DataCpy.pixfmt;
             data = DataCpy.data;
             bytesperline = DataCpy.bytesperline;
-
         };
 
         ~V4l2Data()
@@ -147,7 +151,6 @@ namespace V4L2Tools
         int _flag_CameraFD;
         std::string _flag_TargetDevice;
         V4l2Info v4l2d;
-        V4l2Data v4l2preData;
         bool isMPlaneSupported = true;
         struct V4l2Dep
         {
