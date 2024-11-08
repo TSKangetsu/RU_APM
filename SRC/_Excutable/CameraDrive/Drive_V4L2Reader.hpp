@@ -71,22 +71,19 @@ namespace V4L2Tools
             height = DataCpy.height;
             maxsize = DataCpy.maxsize;
             pixfmt = DataCpy.pixfmt;
+
             if (size <= 0)
-            {
-                size = DataCpy.size;
-                data.reset(new unsigned char[size]);
-            }
-            else
-            {
-                size = DataCpy.size;
-                std::copy(DataCpy.data.get(), DataCpy.data.get() + size, this->data.get());
-            }
+                data.reset(new unsigned char[DataCpy.size]);
+
+            size = DataCpy.size;
+            std::copy(DataCpy.data.get(), DataCpy.data.get() + size, this->data.get());
             bytesperline = DataCpy.bytesperline;
             return *this;
         };
 
         V4l2Data(const V4l2Data &DataCpy)
         {
+            // FIXME: check here has risk may seg
             width = DataCpy.width;
             height = DataCpy.height;
             size = DataCpy.size;

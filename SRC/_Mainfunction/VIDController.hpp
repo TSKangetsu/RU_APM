@@ -13,7 +13,7 @@ using SYSU = RuAPSSys::UORBMessage;
 
 #define EMAP(Variable) (#Variable)
 #define MAXV4LBUF 1
-#define MAXBUFFER 2
+#define MAXBUFFER 5
 
 enum VideoFormat
 {

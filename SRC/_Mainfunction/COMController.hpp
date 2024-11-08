@@ -47,6 +47,8 @@ public:
 private:
     V4L2Tools::V4l2Data comInVdata;
     V4L2Tools::V4l2Data comInVdataOut;
+    std::shared_ptr<uint8_t> InjectVTarget;
+    std::shared_ptr<uint8_t> InjectFTarget;
 
     void VideoDataInject(uint8_t *data, int size);
     void COMBoradCastDataInject();
@@ -81,6 +83,9 @@ COMController_t::COMController_t()
 #ifdef MODULE_FECLIB
     fec_init();
 #endif
+    InjectVTarget.reset(new uint8_t[1920 * 1080 * 3]);
+    InjectFTarget.reset(new uint8_t[1920 * 1080 * 3]);
+
     // Step 1:
     if (SYSC::CommonConfig.COM_BroadCastEnable)
     {
@@ -177,9 +182,7 @@ COMController_t::COMController_t()
                 [&]()
                 {
                     // Step 0. Target Video data
-
                     size_t InjectVSize = 0;
-                    std::shared_ptr<uint8_t> InjectVTarget;
                     // Step 1. Read From uorb
                     if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                             SYSU::StreamStatus.VideoIFlowRaw
@@ -188,7 +191,7 @@ COMController_t::COMController_t()
                         comInVdata = std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                                          SYSU::StreamStatus.VideoIFlowRaw
                                              [SYSC::CommonConfig.COM_CastFrameIndex])
-                                         .peekFrame();
+                                         .getFrame();
                     // Step 2. Transcodec or not, deal with VID data
                     if (comInVdata.size > 0)
                     {
@@ -306,14 +309,11 @@ void COMController_t::VideoDataInject(uint8_t *data, int size)
 {
     int InjectVSize;
     int InjectFSize;
-    std::shared_ptr<uint8_t> InjectVTarget;
-    std::shared_ptr<uint8_t> InjectFTarget;
 
     FrameFECSyncID++;
     FrameFECSyncID = FrameFECSyncID > 7 ? 0 : FrameFECSyncID;
 
     InjectVSize = size + 4;
-    InjectVTarget.reset(new uint8_t[InjectVSize]);
 
     std::copy(data, data + size, InjectVTarget.get());
     // TODO: add CRC check
@@ -341,7 +341,6 @@ void COMController_t::VideoDataInject(uint8_t *data, int size)
     InjectFSize = size + 4; // NO CRC32, why using CRC for FEC? Update: yes, just fec the crc data, after fix can use it
     if (InjectFSize < FEC_DATA_MAX)
     {
-        InjectFTarget.reset(new uint8_t[InjectFSize]);
         //
         std::memset(fecPool.FecDataType_t.data1d, 0x00, FEC_DATA_MAX);
         std::memset(dataPool.FecDataType_t.data1d, 0x00, FEC_DATA_MAX);
@@ -352,9 +351,6 @@ void COMController_t::VideoDataInject(uint8_t *data, int size)
         fec_encode(PacketPrePacks,
                    dataPool.dataout, packetSize, fecPool.dataout,
                    packetSize);
-        std::copy(fecPool.FecDataType_t.data1d,
-                  fecPool.FecDataType_t.data1d + InjectFSize,
-                  InjectFTarget.get());
 
         Injector->WIFICastInject(fecPool.FecDataType_t.data1d,
                                  InjectFSize, // FIXME: FEC frame same as data frame? now test with full fec out

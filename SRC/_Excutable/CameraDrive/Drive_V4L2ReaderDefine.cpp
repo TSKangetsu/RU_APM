@@ -143,7 +143,6 @@ bool V4L2Tools::V4L2Drive::V4L2Control(unsigned int id, int value)
 
 void V4L2Tools::V4L2Drive::V4L2Read(V4L2Tools::V4l2Data &Vdata)
 {
-    unsigned int size = 0;
     if (Vdata.size <= 0)
         Vdata = V4L2Tools::V4l2Data(
             v4l2d.ImgWidth,
