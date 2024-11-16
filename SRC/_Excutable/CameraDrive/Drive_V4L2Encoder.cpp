@@ -223,7 +223,6 @@ V4L2Tools::V4L2Encoder::V4L2Encoder(std::string Device, V4l2Info Info, bool isge
 
 void V4L2Tools::V4L2Encoder::V4L2EncodeSet(V4L2Tools::V4l2Data &VdataIn, V4L2Tools::V4l2Data &VdataOut)
 {
-retry:
     if (VdataIn.size <= 0)
         VdataIn = V4L2Tools::V4l2Data(
             v4l2d.ImgWidth,
@@ -234,10 +233,7 @@ retry:
             v4l2.CameraFormat.fmt.pix.bytesperline);
 
     ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer);
-
-    std::copy(VdataIn.data.get(),
-              VdataIn.data.get() + VdataIn.size,
-              (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index]);
+    VdataIn.data = (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index];
 
     if (isMPlaneSupported)
         v4l2.CameraBuffer.m.planes->length = VdataIn.maxsize;
@@ -249,8 +245,6 @@ retry:
     //
     ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer);
     //=========================================================================================//
-
-retry2:
     if (VdataOut.size <= 0)
         VdataOut = V4L2Tools::V4l2Data(
             v4l2d.ImgWidth,
@@ -276,8 +270,6 @@ retry2:
         VdataOut.size = v4l2.CameraBufferOut.m.planes->bytesused;
     else
         VdataOut.size = v4l2.CameraBufferOut.bytesused;
-    std::copy((unsigned char *)v4l2BuffersOut[v4l2.CameraBufferOut.index],
-              (unsigned char *)v4l2BuffersOut[v4l2.CameraBufferOut.index] + VdataOut.size,
-              VdataOut.data.get());
+    VdataOut.data = (unsigned char *)v4l2BuffersOut[v4l2.CameraBufferOut.index];
     ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBufferOut);
 }

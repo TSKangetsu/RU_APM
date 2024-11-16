@@ -45,6 +45,7 @@ public:
     ~COMController_t();
 
 private:
+    V4L2Tools::V4l2Data comInCpy;
     V4L2Tools::V4l2Data comInVdata;
     V4L2Tools::V4l2Data comInVdataOut;
     std::shared_ptr<uint8_t> InjectVTarget;
@@ -205,24 +206,25 @@ COMController_t::COMController_t()
                                     [SYSC::CommonConfig.COM_CastFrameIndex])
                                     .DeviceIFormat == "H265")
                         {
-                            VideoDataInject(comInVdata.data.get(), comInVdata.size);
+                            VideoDataInject(comInVdata.data, comInVdata.size);
                         }
                         else
                         {
 #ifdef MODULE_FFMPEG
-                            Encoder->pushFrame(comInVdata.data.get(), comInVdata.size, comInVdata.bytesperline);
-                            Encoder->getFrame(EncoderQueue);
-                            //
-                            for (; !EncoderQueue.empty(); EncoderQueue.pop())
-                            {
-                                VideoDataInject(EncoderQueue.front().comInVdata.get(),
-                                                EncoderQueue.front().size);
-                            }
+                            // Encoder->pushFrame(comInVdata.data, comInVdata.size, comInVdata.bytesperline);
+                            // Encoder->getFrame(EncoderQueue);
+                            // //
+                            // for (; !EncoderQueue.empty(); EncoderQueue.pop())
+                            // {
+                            //     VideoDataInject(EncoderQueue.front().comInVdata.data,
+                            //                     EncoderQueue.front().size);
+                            // }
 #else
                             // TODO: V4L2ENC support
-                            V4L2Enc->V4L2EncodeSet(comInVdata, comInVdataOut);
+                            V4L2Enc->V4L2EncodeSet(comInCpy, comInVdataOut);
+                            std::copy(comInVdata.data, comInVdata.data + comInVdata.size, comInCpy.data);
                             if (comInVdataOut.size != comInVdataOut.maxsize) // FIXME: if data in max, H264 data is empty
-                                VideoDataInject(comInVdataOut.data.get(), comInVdataOut.size);
+                                VideoDataInject(comInVdataOut.data, comInVdataOut.size);
 #endif
                         }
 
