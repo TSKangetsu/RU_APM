@@ -44,7 +44,7 @@ namespace RuAPSSys
 			VIDController.reset(new VIDController_t());
 			
 			// Step 4. Load up Message and VideoStream BoradCast;
-			COMController.reset(new COMController_t());
+			// COMController.reset(new COMController_t());
 			// ...
 			// Step N. Start up all process complete.
 			LOG::LogPrintSTDIO(_SYS << STARTUPCOMPLETE);

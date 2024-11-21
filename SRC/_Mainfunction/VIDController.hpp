@@ -12,7 +12,7 @@ using SYSC = RuAPSSys::ConfigCLA;
 using SYSU = RuAPSSys::UORBMessage;
 
 #define EMAP(Variable) (#Variable)
-#define MAXV4LBUF 1
+#define MAXV4LBUF 5
 #define MAXBUFFER 5
 
 enum VideoFormat
@@ -48,6 +48,8 @@ inline static const std::map<std::string, unsigned int> V4L2Format_s =
         {EMAP(MJPEG), V4L2_PIX_FMT_MJPEG},
 };
 
+#include "COMController.hpp"
+
 class VIDController_t
 {
 public:
@@ -55,6 +57,7 @@ public:
     ~VIDController_t();
 
 private:
+    COMController_t *con;
     void VideoISLoader();
     std::vector<std::unique_ptr<FlowThread>> VideoISThread;
     std::vector<std::unique_ptr<V4L2Tools::V4L2Drive>> V4L2Driver;
@@ -104,6 +107,8 @@ VIDController_t::VIDController_t()
     }
 
     VideoISLoader();
+
+    con = new COMController_t();
 };
 
 void VIDController_t::VideoISLoader()
@@ -126,6 +131,8 @@ void VIDController_t::VideoISLoader()
                 std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                     SYSU::StreamStatus.VideoIFlowRaw[s])
                     .pushFrame(SYSU::StreamStatus.DataBufffer[s]);
+
+                con->COMThreading();
             },
             (float)SYSC::CameraConfig[i].DeviceFPS));
 
