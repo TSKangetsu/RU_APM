@@ -211,19 +211,20 @@ COMController_t::COMController_t()
                         else
                         {
 #ifdef MODULE_FFMPEG
-                            // Encoder->pushFrame(comInVdata.data, comInVdata.size, comInVdata.bytesperline);
-                            // Encoder->getFrame(EncoderQueue);
-                            // //
-                            // for (; !EncoderQueue.empty(); EncoderQueue.pop())
-                            // {
-                            //     VideoDataInject(EncoderQueue.front().comInVdata.data,
-                            //                     EncoderQueue.front().size);
-                            // }
+                        // Encoder->pushFrame(comInVdata.data, comInVdata.size, comInVdata.bytesperline);
+                        // Encoder->getFrame(EncoderQueue);
+                        // //
+                        // for (; !EncoderQueue.empty(); EncoderQueue.pop())
+                        // {
+                        //     VideoDataInject(EncoderQueue.front().comInVdata.data,
+                        //                     EncoderQueue.front().size);
+                        // }
 #else
                             // TODO: V4L2ENC support
                             V4L2Enc->V4L2EncodeSet(comInCpy, comInVdataOut);
                             std::copy(comInVdata.data, comInVdata.data + comInVdata.size, comInCpy.data);
-                            if (comInVdataOut.size != comInVdataOut.maxsize) // FIXME: if data in max, H264 data is empty
+                            // std::cout << comInVdataOut.size << '\n';
+                            if (comInVdataOut.size != 0) // FIXME: if data in max, H264 data is empty
                                 VideoDataInject(comInVdataOut.data, comInVdataOut.size);
 #endif
                         }

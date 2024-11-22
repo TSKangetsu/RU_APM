@@ -223,7 +223,7 @@ V4L2Tools::V4L2Encoder::V4L2Encoder(std::string Device, V4l2Info Info, bool isge
 
 void V4L2Tools::V4L2Encoder::V4L2EncodeSet(V4L2Tools::V4l2Data &VdataIn, V4L2Tools::V4l2Data &VdataOut)
 {
-    if (VdataIn.size <= 0)
+    if (VdataIn.maxsize <= 0)
         VdataIn = V4L2Tools::V4l2Data(
             v4l2d.ImgWidth,
             v4l2d.ImgHeight,
@@ -245,7 +245,7 @@ void V4L2Tools::V4L2Encoder::V4L2EncodeSet(V4L2Tools::V4l2Data &VdataIn, V4L2Too
     //
     ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer);
     //=========================================================================================//
-    if (VdataOut.size <= 0)
+    if (VdataOut.maxsize <= 0)
         VdataOut = V4L2Tools::V4l2Data(
             v4l2d.ImgWidth,
             v4l2d.ImgHeight,
