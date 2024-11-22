@@ -250,7 +250,8 @@ void COMController_t::COMThreading()
 #else
             // TODO: V4L2ENC support
             V4L2Enc->V4L2EncodeSet(comInVdata, comInVdataOut);
-            if (comInVdataOut.size != comInVdataOut.maxsize) // FIXME: if data in max, H264 data is empty
+            std::cout << comInVdataOut.size << "\n";
+            if (comInVdataOut.size != 0) // FIXME: if data in max, H264 data is empty
                 VideoDataInject(comInVdataOut.data.get(), comInVdataOut.size);
 #endif
         }
