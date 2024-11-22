@@ -143,15 +143,6 @@ bool V4L2Tools::V4L2Drive::V4L2Control(unsigned int id, int value)
 
 void V4L2Tools::V4L2Drive::V4L2Read(V4L2Tools::V4l2Data &Vdata)
 {
-    if (Vdata.size <= 0)
-        Vdata = V4L2Tools::V4l2Data(
-            v4l2d.ImgWidth,
-            v4l2d.ImgHeight,
-            v4l2.CameraQBuffer.length,
-            v4l2.CameraQBuffer.length,
-            v4l2d.PixFormat,
-            v4l2.CameraFormat.fmt.pix.bytesperline);
-
     fd_set fds;
     struct timeval tv;
     int r;
@@ -162,11 +153,16 @@ void V4L2Tools::V4L2Drive::V4L2Read(V4L2Tools::V4l2Data &Vdata)
     r = select(_flag_CameraFD + 1, &fds, NULL, NULL, &tv);
     if (ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer) != -1)
     {
+
         Vdata.bytesperline = v4l2.CameraFormat.fmt.pix.bytesperline;
         Vdata.size = v4l2.CameraBuffer.bytesused;
-        std::copy((unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index],
-                  (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index] + Vdata.size,
-                  Vdata.data.get());
+        Vdata.id = v4l2.CameraBuffer.index;
+        if (Vdata.ismapping)
+            Vdata.data = (uint8_t *)v4l2Buffers[v4l2.CameraBuffer.index];
+        else
+            std::copy((uint8_t *)v4l2Buffers[v4l2.CameraBuffer.index],
+                      (uint8_t *)v4l2Buffers[v4l2.CameraBuffer.index] + Vdata.size,
+                      Vdata.data);
         V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_camread_error);
     }
     else

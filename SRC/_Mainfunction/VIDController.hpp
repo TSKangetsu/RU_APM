@@ -1,5 +1,6 @@
 #pragma once
 #include <map>
+#include <deque>
 #include "UORBMessage.hpp"
 #include "../_Excutable/ThreadBuffer.hpp"
 #include "../_Excutable/LogPublicator.hpp"
@@ -12,8 +13,8 @@ using SYSC = RuAPSSys::ConfigCLA;
 using SYSU = RuAPSSys::UORBMessage;
 
 #define EMAP(Variable) (#Variable)
-#define MAXV4LBUF 1
-#define MAXBUFFER 5
+#define MAXV4LBUF 5
+#define MAXBUFFER MAXV4LBUF
 
 enum VideoFormat
 {
@@ -86,12 +87,9 @@ VIDController_t::VIDController_t()
                             .H264_EnablePPS = true,
                         }));
 
-                FrameBuffer<V4L2Tools::V4l2Data> Data;
+                FrameBuffer<V4L2Tools::V4l2Data> DataBuffer;
                 SYSU::StreamStatus.VideoIFlowRaw.push_back(
-                    std::make_tuple(std::move(Data), SYSC::CameraConfig[i]));
-
-                V4L2Tools::V4l2Data vdata;
-                SYSU::StreamStatus.DataBufffer.push_back(vdata);
+                    std::make_tuple(std::move(DataBuffer), SYSC::CameraConfig[i]));
 
                 V4L2Driver.push_back(std::move(V4L2P));
             }
@@ -114,18 +112,19 @@ void VIDController_t::VideoISLoader()
         VideoIThread.reset(new FlowThread(
             [&, s = i]()
             {
-                if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
-                        SYSU::StreamStatus.VideoIFlowRaw[s])
-                        .frameCount > MAXBUFFER)
-                    std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
-                        SYSU::StreamStatus.VideoIFlowRaw[s])
-                        .getFrame();
+                // if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
+                //         SYSU::StreamStatus.VideoIFlowRaw[s])
+                //         .frameCount >= MAXBUFFER)
+                //     std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
+                //         SYSU::StreamStatus.VideoIFlowRaw[s])
+                //         .getFrame();
 
-                // FIXME: WARRNING! dangerous cpu usage with alloc, consider pointer instead of copy
-                V4L2Driver[s]->V4L2Read(SYSU::StreamStatus.DataBufffer[s]);
+                V4L2Tools::V4l2Data data = V4L2Driver[s]->V4l2DataGet();
+                V4L2Driver[s]->V4L2Read(data);
+                // std::cout << data.id << "----\n";
                 std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                     SYSU::StreamStatus.VideoIFlowRaw[s])
-                    .pushFrame(SYSU::StreamStatus.DataBufffer[s]);
+                    .pushFrame(data);
             },
             (float)SYSC::CameraConfig[i].DeviceFPS));
 

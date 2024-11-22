@@ -184,14 +184,20 @@ COMController_t::COMController_t()
                     // Step 0. Target Video data
                     size_t InjectVSize = 0;
                     // Step 1. Read From uorb
-                    if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
-                            SYSU::StreamStatus.VideoIFlowRaw
-                                [SYSC::CommonConfig.COM_CastFrameIndex])
-                            .frameCount > 0)
+                    while (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
+                               SYSU::StreamStatus.VideoIFlowRaw
+                                   [SYSC::CommonConfig.COM_CastFrameIndex])
+                               .frameCount >= MAXBUFFER)
                         comInVdata = std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                                          SYSU::StreamStatus.VideoIFlowRaw
                                              [SYSC::CommonConfig.COM_CastFrameIndex])
                                          .getFrame();
+
+                    // std::cout << std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
+                    //                  SYSU::StreamStatus.VideoIFlowRaw
+                    //                      [SYSC::CommonConfig.COM_CastFrameIndex])
+                    //                  .frameCount
+                    //           << " " << comInVdata.id << '\n';
                     // Step 2. Transcodec or not, deal with VID data
                     if (comInVdata.size > 0)
                     {
@@ -205,7 +211,7 @@ COMController_t::COMController_t()
                                     [SYSC::CommonConfig.COM_CastFrameIndex])
                                     .DeviceIFormat == "H265")
                         {
-                            VideoDataInject(comInVdata.data.get(), comInVdata.size);
+                            VideoDataInject(comInVdata.data, comInVdata.size);
                         }
                         else
                         {
@@ -220,9 +226,11 @@ COMController_t::COMController_t()
                             }
 #else
                             // TODO: V4L2ENC support
+                            comInVdata.ismapping = false;
+                            comInVdataOut = V4L2Enc->V4l2DataGetOut();
                             V4L2Enc->V4L2EncodeSet(comInVdata, comInVdataOut);
-                            if (comInVdataOut.size != 0) // FIXME: if data in max, H264 data is empty
-                                VideoDataInject(comInVdataOut.data.get(), comInVdataOut.size);
+                            if (comInVdataOut.size != 0)
+                                VideoDataInject(comInVdataOut.data, comInVdataOut.size);
 #endif
                         }
 
