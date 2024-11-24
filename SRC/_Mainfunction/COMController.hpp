@@ -187,104 +187,108 @@ COMController_t::COMController_t()
                     while (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                                SYSU::StreamStatus.VideoIFlowRaw
                                    [SYSC::CommonConfig.COM_CastFrameIndex])
-                               .frameCount >= MAXBUFFER)
+                               .frameCount >=
+                           MAXBUFFER)
+                    {
                         comInVdata = std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                                          SYSU::StreamStatus.VideoIFlowRaw
                                              [SYSC::CommonConfig.COM_CastFrameIndex])
                                          .getFrame();
 
-                    // std::cout << std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
-                    //                  SYSU::StreamStatus.VideoIFlowRaw
-                    //                      [SYSC::CommonConfig.COM_CastFrameIndex])
-                    //                  .frameCount
-                    //           << " " << comInVdata.id << '\n';
-                    // Step 2. Transcodec or not, deal with VID data
-                    if (comInVdata.size > 0)
-                    {
-                        // TODO: consider add a timestamp binding EFC and data
-                        if (std::get<SYSC::CameraSettings>(
-                                SYSU::StreamStatus.VideoIFlowRaw
-                                    [SYSC::CommonConfig.COM_CastFrameIndex])
-                                    .DeviceIFormat == "H264" ||
-                            std::get<SYSC::CameraSettings>(
-                                SYSU::StreamStatus.VideoIFlowRaw
-                                    [SYSC::CommonConfig.COM_CastFrameIndex])
-                                    .DeviceIFormat == "H265")
+                        std::cout << std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
+                                         SYSU::StreamStatus.VideoIFlowRaw
+                                             [SYSC::CommonConfig.COM_CastFrameIndex])
+                                         .frameCount
+                                  << " " << comInVdata.id << '\n';
+                        // Step 2. Transcodec or not, deal with VID data
+                        if (comInVdata.size > 0)
                         {
-                            VideoDataInject(comInVdata.data, comInVdata.size);
-                        }
-                        else
-                        {
-#ifdef MODULE_FFMPEG
-                            Encoder->pushFrame(comInVdata.data.get(), comInVdata.size, comInVdata.bytesperline);
-                            Encoder->getFrame(EncoderQueue);
-                            //
-                            for (; !EncoderQueue.empty(); EncoderQueue.pop())
+                            // TODO: consider add a timestamp binding EFC and data
+                            if (std::get<SYSC::CameraSettings>(
+                                    SYSU::StreamStatus.VideoIFlowRaw
+                                        [SYSC::CommonConfig.COM_CastFrameIndex])
+                                        .DeviceIFormat == "H264" ||
+                                std::get<SYSC::CameraSettings>(
+                                    SYSU::StreamStatus.VideoIFlowRaw
+                                        [SYSC::CommonConfig.COM_CastFrameIndex])
+                                        .DeviceIFormat == "H265")
                             {
-                                VideoDataInject(EncoderQueue.front().comInVdata.get(),
-                                                EncoderQueue.front().size);
+                                VideoDataInject(comInVdata.data, comInVdata.size);
                             }
-#else
-                            // TODO: V4L2ENC support
-                            comInVdata.ismapping = false;
-                            comInVdataOut = V4L2Enc->V4l2DataGetOut();
-                            V4L2Enc->V4L2EncodeSet(comInVdata, comInVdataOut);
-                            if (comInVdataOut.size != 0)
-                                VideoDataInject(comInVdataOut.data, comInVdataOut.size);
-#endif
-                        }
-
-                        // Step N + 1. Inject img info.
-                        BroadCastDataCount++;
-                        if (BroadCastDataCount >=
-                            (float)SYSC::CameraConfig
-                                [SYSC::CommonConfig.COM_CastFrameIndex]
-                                    .DeviceFPS)
-                        {
-                            BroadCastDataCount = 0;
-                            uint8_t ImgInfo[] = {
-                                (uint8_t)(SYSC::CommonConfig.COM_CastFrameIndex),
-                                (uint8_t)(comInVdata.maxsize),
-                                (uint8_t)(comInVdata.maxsize >> 8),
-                                (uint8_t)(comInVdata.maxsize >> 16),
-                                (uint8_t)(comInVdata.maxsize >> 24),
-                                (uint8_t)(std::get<SYSC::CameraSettings>(
-                                              SYSU::StreamStatus.VideoIFlowRaw
-                                                  [SYSC::CommonConfig.COM_CastFrameIndex])
-                                              .DeviceWidth),
-                                (uint8_t)(std::get<SYSC::CameraSettings>(
-                                              SYSU::StreamStatus.VideoIFlowRaw
-                                                  [SYSC::CommonConfig.COM_CastFrameIndex])
-                                              .DeviceWidth >>
-                                          8),
-                                (uint8_t)(std::get<SYSC::CameraSettings>(
-                                              SYSU::StreamStatus.VideoIFlowRaw
-                                                  [SYSC::CommonConfig.COM_CastFrameIndex])
-                                              .DeviceHeight),
-                                (uint8_t)(std::get<SYSC::CameraSettings>(
-                                              SYSU::StreamStatus.VideoIFlowRaw
-                                                  [SYSC::CommonConfig.COM_CastFrameIndex])
-                                              .DeviceHeight >>
-                                          8),
-                            };
-
-                            Injector->WIFICastInject(ImgInfo,
-                                                     sizeof(ImgInfo), 0,
-                                                     BroadCastType::DataStream,
-                                                     0, 0xf, 0xff);
-#ifdef MODULE_FECLIB
-                            // FEC data using next channel
-                            ImgInfo[0] = (uint8_t)(SYSC::CommonConfig.COM_CastFrameIndex + 1);
-                            Injector->WIFICastInject(ImgInfo,
-                                                     sizeof(ImgInfo), 0,
-                                                     BroadCastType::DataStream,
-                                                     0, 0xf, 0xff);
-#endif
-                            if (IsTimedetectUpdated)
+                            else
                             {
-                                Timedetectedstart = GetTimeStamp();
-                                IsTimedetectUpdated = false;
-                            };
+#ifdef MODULE_FFMPEG
+                                Encoder->pushFrame(comInVdata.data.get(), comInVdata.size, comInVdata.bytesperline);
+                                Encoder->getFrame(EncoderQueue);
+                                //
+                                for (; !EncoderQueue.empty(); EncoderQueue.pop())
+                                {
+                                    VideoDataInject(EncoderQueue.front().comInVdata.get(),
+                                                    EncoderQueue.front().size);
+                                }
+#else
+                                // TODO: V4L2ENC support
+                                comInVdata.ismapping = false;
+                                comInVdataOut = V4L2Enc->V4l2DataGetOut();
+                                V4L2Enc->V4L2EncodeSet(comInVdata, comInVdataOut);
+                                comInVdata.ismapping = true;
+                                if (comInVdataOut.size != 0)
+                                    VideoDataInject(comInVdataOut.data, comInVdataOut.size);
+#endif
+                            }
+
+                            // Step N + 1. Inject img info.
+                            BroadCastDataCount++;
+                            if (BroadCastDataCount >=
+                                (float)SYSC::CameraConfig
+                                    [SYSC::CommonConfig.COM_CastFrameIndex]
+                                        .DeviceFPS)
+                            {
+                                BroadCastDataCount = 0;
+                                uint8_t ImgInfo[] = {
+                                    (uint8_t)(SYSC::CommonConfig.COM_CastFrameIndex),
+                                    (uint8_t)(comInVdata.maxsize),
+                                    (uint8_t)(comInVdata.maxsize >> 8),
+                                    (uint8_t)(comInVdata.maxsize >> 16),
+                                    (uint8_t)(comInVdata.maxsize >> 24),
+                                    (uint8_t)(std::get<SYSC::CameraSettings>(
+                                                  SYSU::StreamStatus.VideoIFlowRaw
+                                                      [SYSC::CommonConfig.COM_CastFrameIndex])
+                                                  .DeviceWidth),
+                                    (uint8_t)(std::get<SYSC::CameraSettings>(
+                                                  SYSU::StreamStatus.VideoIFlowRaw
+                                                      [SYSC::CommonConfig.COM_CastFrameIndex])
+                                                  .DeviceWidth >>
+                                              8),
+                                    (uint8_t)(std::get<SYSC::CameraSettings>(
+                                                  SYSU::StreamStatus.VideoIFlowRaw
+                                                      [SYSC::CommonConfig.COM_CastFrameIndex])
+                                                  .DeviceHeight),
+                                    (uint8_t)(std::get<SYSC::CameraSettings>(
+                                                  SYSU::StreamStatus.VideoIFlowRaw
+                                                      [SYSC::CommonConfig.COM_CastFrameIndex])
+                                                  .DeviceHeight >>
+                                              8),
+                                };
+
+                                Injector->WIFICastInject(ImgInfo,
+                                                         sizeof(ImgInfo), 0,
+                                                         BroadCastType::DataStream,
+                                                         0, 0xf, 0xff);
+#ifdef MODULE_FECLIB
+                                // FEC data using next channel
+                                ImgInfo[0] = (uint8_t)(SYSC::CommonConfig.COM_CastFrameIndex + 1);
+                                Injector->WIFICastInject(ImgInfo,
+                                                         sizeof(ImgInfo), 0,
+                                                         BroadCastType::DataStream,
+                                                         0, 0xf, 0xff);
+#endif
+                                if (IsTimedetectUpdated)
+                                {
+                                    Timedetectedstart = GetTimeStamp();
+                                    IsTimedetectUpdated = false;
+                                };
+                            }
                         }
                     }
                     COMBoradCastDataInject();
