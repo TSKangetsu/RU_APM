@@ -4,6 +4,7 @@ set(MODULE_FFMPEG true  CACHE BOOL "enable module: H.264 or H.265 transcodec")
 set(MODULE_FECLIB true  CACHE BOOL "enable module: Reed solomon forward error correct")
 set(FULLSTATIC false CACHE  INTERNAL bool)
 set(OPENWRT FALSE CACHE  INTERNAL bool)
+set(MAXBUFFER 5 CACHE  INTERNAL int)
 
 cmake_minimum_required(VERSION 3.13)
 set(CMAKE_CXX_STANDARD 17)
@@ -13,8 +14,8 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 project(Ru_APM)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wstack-usage=1000")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wstack-usage=1000")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -s -Wstack-usage=1000")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os -s -Wstack-usage=1000")
 
 IF(FULLSTATIC)
   set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
@@ -23,6 +24,10 @@ IF(FULLSTATIC)
   set(BUILD_SHARED_LIBS OFF)
   set(CMAKE_EXE_LINKER_FLAGS "-static -static-libstdc++ -static-libgcc")
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+ENDIF()
+
+IF(MAXBUFFER)
+    add_compile_definitions(MAXV4LBUF=${MAXBUFFER})
 ENDIF()
 
 # add_definitions(-DNETDEBUG)

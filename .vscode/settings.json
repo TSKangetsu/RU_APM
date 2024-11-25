@@ -1,12 +1,12 @@
 {
     "custom.user": "root",
-    "custom.ipaddress": "192.168.248.6",
+    "custom.ipaddress": "192.168.6.83",
     "custom.gdbserverPort": "9590",
     "custom.gdb": "aarch64-openwrt-linux-gdb",
     "custom.exe": "RuAPM_Cli",
     "custom.exeargs": " ",
     "custom.proxyext": "proxychains",
-    "custom.extenalcmd": " ",
+    "custom.extenalcmd": "scp APSconfig.json root@192.168.6.83:/etc/",
     "custom.targetdir": "/usr/bin/",
     "custom.runwith": " ",
     "cmake.configureArgs": [
@@ -15,6 +15,7 @@
         "-DOPENWRT=true",
         "-DMODULE_FFMPEG=false",
         "-DMODULE_APM=true",
-        "-DMODULE_FECLIB=true"
+        "-DMODULE_FECLIB=true",
+        "-DMAXBUFFER=3",
     ],
 }

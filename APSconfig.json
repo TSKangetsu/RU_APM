@@ -13,11 +13,11 @@
             "_IsFlowEnable": false,
             "_IsGPSEnable": false,
             "_IsRCSafeEnable": true,
-            "__FlowDevice": "/dev/ttyAMA5",
-            "__GPSDevice": "/dev/ttyAMA5",
-            "__I2CDevice": "/dev/i2c-1",
-            "__MPUDeviceSPI": "/dev/spidev0.1",
-            "__RCDevice": "/dev/ttyAMA3"
+            "__FlowDevice": "/dev/ttyS2",
+            "__GPSDevice": "/dev/ttyS2",
+            "__I2CDevice": "/dev/i2c-0",
+            "__MPUDeviceSPI": "/dev/spidev0.0",
+            "__RCDevice": "/dev/ttyS1"
         },
         "FilterConfig": {
             "_flag_AccelBias_Trust_Beta": 0.02,
@@ -162,14 +162,14 @@
         }
     },
     "VideoConfig": {
-        "V4L2Encoder": "/dev/video11",
+        "V4L2Encoder": "/dev/video1",
         "Device": [
             {
                 "DevicePATH": "/dev/video0",
                 "DeviceDriver": "V4L2",
-                "DeviceIFormat": "YUYV",
-                "DeviceWidth": 1280,
-                "DeviceHeight": 720,
+                "DeviceIFormat": "NV12",
+                "DeviceWidth": 640,
+                "DeviceHeight": 480,
                 "DeviceFPS": 60,
                 "enable": true
             },
@@ -191,7 +191,7 @@
         "COM_BroadCastBitRate": 300000,
         "COM_BroadCastPFrameSize": 15,
         "BroadcastInterfaces": [
-            "wlan1"
+            "wlan0"
         ]
     }
 }

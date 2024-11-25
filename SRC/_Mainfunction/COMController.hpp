@@ -190,6 +190,12 @@ COMController_t::COMController_t()
                                .frameCount >=
                            MAXBUFFER)
                     {
+#if (MAXBUFFER == 1)
+                        std::get<std::mutex *>(SYSU::StreamStatus.VideoIFlowRaw
+                                                   [SYSC::CommonConfig.COM_CastFrameIndex])
+                            ->lock();
+#endif
+
                         comInVdata = std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                                          SYSU::StreamStatus.VideoIFlowRaw
                                              [SYSC::CommonConfig.COM_CastFrameIndex])
@@ -218,12 +224,12 @@ COMController_t::COMController_t()
                             else
                             {
 #ifdef MODULE_FFMPEG
-                                Encoder->pushFrame(comInVdata.data.get(), comInVdata.size, comInVdata.bytesperline);
+                                Encoder->pushFrame(comInVdata.data, comInVdata.size, comInVdata.bytesperline);
                                 Encoder->getFrame(EncoderQueue);
                                 //
                                 for (; !EncoderQueue.empty(); EncoderQueue.pop())
                                 {
-                                    VideoDataInject(EncoderQueue.front().comInVdata.get(),
+                                    VideoDataInject(EncoderQueue.front().comInVdata,
                                                     EncoderQueue.front().size);
                                 }
 #else
@@ -290,6 +296,12 @@ COMController_t::COMController_t()
                                 };
                             }
                         }
+
+#if (MAXBUFFER == 1)
+                        std::get<std::mutex *>(SYSU::StreamStatus.VideoIFlowRaw
+                                                   [SYSC::CommonConfig.COM_CastFrameIndex])
+                            ->unlock();
+#endif
                     }
                     COMBoradCastDataInject();
                 },
