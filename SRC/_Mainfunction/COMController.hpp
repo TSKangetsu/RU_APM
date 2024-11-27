@@ -179,14 +179,11 @@ COMController_t::COMController_t()
             BroadcastThread.reset(new FlowThread(
                 [&]()
                 {
-                    // Step 0. Target Video data
-                    size_t InjectVSize = 0;
                     // Step 1. Read From uorb
                     if (std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                             SYSU::StreamStatus.VideoIFlowRaw
                                 [SYSC::CommonConfig.COM_CastFrameIndex])
-                            .frameCount >
-                        MAXBUFFER)
+                            .frameCount > 0)
                     {
 #if (MAXBUFFER == 1)
                         std::get<std::mutex *>(SYSU::StreamStatus.VideoIFlowRaw
@@ -199,11 +196,6 @@ COMController_t::COMController_t()
                                              [SYSC::CommonConfig.COM_CastFrameIndex])
                                          .getFrame();
 
-                        // std::cout << std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
-                        //                  SYSU::StreamStatus.VideoIFlowRaw
-                        //                      [SYSC::CommonConfig.COM_CastFrameIndex])
-                        //                  .frameCount
-                        //           << " " << comInVdata.id << '\n';
                         // Step 2. Transcodec or not, deal with VID data
                         if (comInVdata.size > 0)
                         {
