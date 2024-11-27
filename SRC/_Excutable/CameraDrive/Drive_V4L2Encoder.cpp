@@ -235,12 +235,13 @@ retry:
 
     ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer);
 
-    if (VdataIn.ismapping)
-        VdataIn.data = (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index];
-    else
-        std::copy(VdataIn.data,
-                  VdataIn.data + VdataIn.size,
-                  (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index]);
+    // ignore mapping type, alway copy in
+    // if (VdataIn.ismapping)
+    //     VdataIn.data = (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index];
+    // else
+    std::copy(VdataIn.data,
+              VdataIn.data + VdataIn.size,
+              (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index]);
 
     if (isMPlaneSupported)
         v4l2.CameraBuffer.m.planes->length = VdataIn.maxsize;

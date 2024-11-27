@@ -118,14 +118,20 @@ void VIDController_t::VideoISLoader()
 #if (MAXBUFFER == 1)
                 std::get<std::mutex *>(SYSU::StreamStatus.VideoIFlowRaw[s])->lock();
 #endif
-                //
                 V4L2Tools::V4l2Data data = V4L2Driver[s]->V4l2DataGet();
-                V4L2Driver[s]->V4L2Read(data);
+                V4L2Tools::V4l2Data dataUnMap =
+                    V4L2Tools::V4l2Data(data.width,
+                                        data.height,
+                                        data.maxsize,
+                                        data.maxsize,
+                                        data.pixfmt,
+                                        data.bytesperline,
+                                        false);
+
+                V4L2Driver[s]->V4L2Read(dataUnMap);
                 std::get<FrameBuffer<V4L2Tools::V4l2Data>>(
                     SYSU::StreamStatus.VideoIFlowRaw[s])
-                    .pushFrame(data);
-                std::cout << "----" << data.id << "\n";
-//
+                    .pushFrame(std::move(dataUnMap));
 #if (MAXBUFFER == 1)
                 std::get<std::mutex *>(SYSU::StreamStatus.VideoIFlowRaw[s])->unlock();
 #endif

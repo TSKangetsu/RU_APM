@@ -35,8 +35,9 @@ namespace V4L2Tools
         bool H264_EnablePPS = true;
     };
 
-    struct V4l2Data
+    class V4l2Data
     {
+    public:
         int id;
         int width;
         int height;
@@ -44,7 +45,7 @@ namespace V4L2Tools
         unsigned int size;
         unsigned int pixfmt;
         unsigned int bytesperline;
-        uint8_t *data;
+        uint8_t *data = nullptr;
         bool ismapping;
         //
         V4l2Data() : id(0), width(0), height(0), maxsize(0),
@@ -56,8 +57,10 @@ namespace V4L2Tools
                  unsigned int size,
                  unsigned int pixfmt,
                  unsigned int bytesperline,
-                 bool ismapping = false)
+                 bool ismapping = false,
+                 int id = 0)
         {
+            this->id = id;
             this->width = width;
             this->height = height;
             this->size = size;
@@ -67,14 +70,32 @@ namespace V4L2Tools
             this->ismapping = ismapping;
             if (!this->ismapping)
             {
-#ifdef DEBUG
-                std::cout << "\033[33m[V4L2Info] V4L2 alloc dataBuffer check" << "\n";
-#endif
+
                 this->data = new uint8_t[this->size];
+#ifdef DEBUG
+                std::cout << "\033[33m[V4L2Info] V4L2 alloc dataBuffer check:" << (int)data << "\n";
+#endif
             }
             else
                 this->data = nullptr;
         };
+
+        V4l2Data(V4l2Data &&Data) noexcept
+        {
+            id = Data.id;
+            width = Data.width;
+            height = Data.height;
+            maxsize = Data.maxsize;
+            size = Data.size;
+            pixfmt = Data.pixfmt;
+            bytesperline = Data.bytesperline;
+            data = Data.data;
+            ismapping = Data.ismapping;
+            //
+            Data.data = nullptr;
+            Data.size = 0;
+            Data.ismapping = true;
+        }
 
         V4l2Data(const V4l2Data &DataCpy)
         {
@@ -110,21 +131,40 @@ namespace V4L2Tools
             pixfmt = DataCpy.pixfmt;
             bytesperline = DataCpy.bytesperline;
             /*
-                when mapped data copy to selfmap,
-                selfmap copy mapping to self,
-                don't change flag
-             */
-            ismapping = DataCpy.ismapping;
-            if (!ismapping && size > 0)
+                   when mapped data copy to selfmap,
+                   selfmap copy mapping to self,
+                   don't change flag
+            */
+            if (!DataCpy.ismapping)
             {
+                if (size > 0)
+                {
 #ifdef DEBUG
-                std::cout << "\033[33m[V4L2Info] V4L2 copying " << (int)data << "\n";
+                    std::cout << "\033[33m[V4L2Info] V4L2 copying "
+                              << (int)(DataCpy.data) << " "
+                              << (int)ismapping
+                              << " " << (int)data << "\n";
 #endif
-                if (data != nullptr)
-                    std::copy(DataCpy.data, DataCpy.data + size, data);
+                    if (data != nullptr)
+                    {
+                        std::copy(DataCpy.data, DataCpy.data + size, data);
+                    }
+                    else
+                    {
+#ifdef DEBUG
+                        std::cout << "\033[33m[V4L2Info] V4L2 alloc dataBuffer check" << "\n";
+#endif
+                        data = new uint8_t[size];
+                        std::copy(DataCpy.data, DataCpy.data + size, data);
+                    }
+                }
             }
             else
-                data = DataCpy.data;
+            {
+                data = DataCpy.data; // Just copy the pointer if the data is mapped (no need for allocation)
+            }
+
+            ismapping = DataCpy.ismapping;
         }
     };
 
