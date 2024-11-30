@@ -137,7 +137,7 @@ COMController_t::COMController_t()
                         .FrameRate = SYSC::CameraConfig
                                          [SYSC::CommonConfig.COM_CastFrameIndex]
                                              .DeviceFPS,
-                        .FrameBuffer = MAXV4LBUF,
+                        .FrameBuffer = 1,
                         .Is_AutoSize = (SYSC::CameraConfig
                                             [SYSC::CommonConfig.COM_CastFrameIndex]
                                                 .DeviceWidth < 0),
@@ -150,9 +150,6 @@ COMController_t::COMController_t()
                         .H264_Bitrate = SYSC::CommonConfig.COM_BroadCastBitRate,
                         .H264_EnablePPS = true,
                     }));
-            }
-            else
-            {
             }
 
             // TODO: better way network control
@@ -226,9 +223,10 @@ COMController_t::COMController_t()
                                 // TODO: V4L2ENC support
                                 comInVdataOut = V4L2Enc->V4l2DataGetOut();
                                 V4L2Enc->V4L2EncodeSet(comInVdata, comInVdataOut);
-                                if (comInVdataOut.size != 0)
+                                if (comInVdataOut.size != 0 &&
+                                    comInVdataOut.size != comInVdataOut.maxsize)
                                 {
-                                    VideoDataInject(comInVdataOut.data, comInVdataOut.size);
+                                    VideoDataInject(comInVdataOut.data, comInVdataOut.size); 
                                 }
                                 comInVdataOut.size = 0;
 #endif
