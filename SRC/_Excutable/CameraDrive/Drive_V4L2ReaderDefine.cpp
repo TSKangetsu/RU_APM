@@ -104,7 +104,15 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
         v4l2.CameraQBuffer.memory = V4L2_MEMORY_MMAP;
         v4l2.CameraQBuffer.index = Index;
         V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QUERYBUF, &v4l2.CameraQBuffer), _v4l2_querybuff_error);
-        v4l2Buffers[Index] = mmap(NULL, v4l2.CameraQBuffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, _flag_CameraFD, v4l2.CameraQBuffer.m.offset);
+
+        v4l2Buffers[Index] = mmap(
+            NULL,
+            v4l2.CameraQBuffer.length,
+            PROT_READ | PROT_WRITE,
+            MAP_SHARED,
+            _flag_CameraFD,
+            v4l2.CameraQBuffer.m.offset);
+
         if (MAP_FAILED == v4l2Buffers[Index])
         {
 #ifdef DEBUG
@@ -153,7 +161,6 @@ void V4L2Tools::V4L2Drive::V4L2Read(V4L2Tools::V4l2Data &Vdata)
     r = select(_flag_CameraFD + 1, &fds, NULL, NULL, &tv);
     if (ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer) != -1)
     {
-
         Vdata.bytesperline = v4l2.CameraFormat.fmt.pix.bytesperline;
         Vdata.size = v4l2.CameraBuffer.bytesused;
         Vdata.id = v4l2.CameraBuffer.index;
@@ -191,6 +198,6 @@ void V4L2Tools::V4L2Drive::V4L2Log(int signal, int error)
         std::cout << "\033[31m[V4L2Expection]V4L2 Error with: \033[0m" << error << "\n";
         std::cout << "\033[31m[V4L2Expection]Error Codes    : \033[0m" << errno << "\n";
 #endif
-        throw error;
+        // throw error;
     }
 }

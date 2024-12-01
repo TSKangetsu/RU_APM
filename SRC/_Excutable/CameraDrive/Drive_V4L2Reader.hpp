@@ -28,6 +28,7 @@ namespace V4L2Tools
         bool Is_AutoSize = false;
         unsigned int PixFormat = V4L2_PIX_FMT_BGR24;
         unsigned int PixFormatOut = V4L2_PIX_FMT_H264;
+        v4l2_memory V4L2OUT_TYPE = V4L2_MEMORY_MMAP;
         // H264 camera codec control
         int H264_PSize = 60;
         int H264_Profile = 0;
@@ -212,6 +213,7 @@ namespace V4L2Tools
 
         void V4L2Log(int signal, int error);
 
+        uint8_t *userBuffer;
         void **v4l2Buffers;
         void **v4l2BuffersOut;
         int _flag_Error;
@@ -239,7 +241,7 @@ namespace V4L2Tools
     class V4L2Encoder : public V4L2Drive
     {
     public:
-        V4L2Encoder(std::string Device, V4l2Info Info, bool isgeter = false);
+        V4L2Encoder(std::string Device, V4l2Info Info);
         void V4L2EncodeSet(V4L2Tools::V4l2Data &VdataIn, V4L2Tools::V4l2Data &VdataOut);
 
         // just don't call it, add compile time check
