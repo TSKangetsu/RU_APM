@@ -93,48 +93,52 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
 
     memset(&v4l2.CameraReqBuffer, 0, sizeof(v4l2.CameraReqBuffer));
     v4l2.CameraReqBuffer.count = v4l2d.FrameBuffer;
-    v4l2.CameraReqBuffer.memory = V4L2_MEMORY_MMAP;
+    v4l2.CameraReqBuffer.memory = v4l2d.V4L2OUT_TYPE;
     v4l2.CameraReqBuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     V4L2Log(ioctl(_flag_CameraFD, VIDIOC_REQBUFS, &v4l2.CameraReqBuffer), _v4l2_reqbuff_error);
     v4l2Buffers = (void **)calloc(v4l2.CameraReqBuffer.count, sizeof(*v4l2Buffers));
+
+    memset(&v4l2.CameraQBuffer, 0, sizeof(v4l2.CameraQBuffer));
     for (int Index = 0; Index < v4l2.CameraReqBuffer.count; ++Index)
     {
-        memset(&v4l2.CameraQBuffer, 0, sizeof(v4l2.CameraQBuffer));
+
         v4l2.CameraQBuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        v4l2.CameraQBuffer.memory = V4L2_MEMORY_MMAP;
+        v4l2.CameraQBuffer.memory = v4l2d.V4L2OUT_TYPE;
         v4l2.CameraQBuffer.index = Index;
         V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QUERYBUF, &v4l2.CameraQBuffer), _v4l2_querybuff_error);
 
-        v4l2Buffers[Index] = mmap(
-            NULL,
-            v4l2.CameraQBuffer.length,
-            PROT_READ | PROT_WRITE,
-            MAP_SHARED,
-            _flag_CameraFD,
-            v4l2.CameraQBuffer.m.offset);
-
-        if (MAP_FAILED == v4l2Buffers[Index])
+        if (v4l2d.V4L2OUT_TYPE == V4L2_MEMORY_MMAP)
         {
-#ifdef DEBUG
-            std::cout << "  Mapping ERROR"
-                      << "\n";
-#endif
-        }
-    }
+            v4l2Buffers[Index] = mmap(
+                NULL,
+                v4l2.CameraQBuffer.length,
+                PROT_READ | PROT_WRITE,
+                MAP_SHARED,
+                _flag_CameraFD,
+                v4l2.CameraQBuffer.m.offset);
 
-    for (int i = 0; i < v4l2.CameraReqBuffer.count; ++i)
-    {
+            if (MAP_FAILED == v4l2Buffers[Index])
+            {
+#ifdef DEBUG
+                std::cout << "  Mapping ERROR"
+                          << "\n";
+#endif
+            }
+        }
+
         memset(&v4l2.CameraBuffer, 0, sizeof(v4l2.CameraBuffer));
         v4l2.CameraBuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        v4l2.CameraBuffer.memory = V4L2_MEMORY_MMAP;
-        v4l2.CameraBuffer.index = i;
+        v4l2.CameraBuffer.memory = v4l2d.V4L2OUT_TYPE;
+        v4l2.CameraBuffer.field = V4L2_FIELD_NONE;
+        v4l2.CameraBuffer.length = v4l2.CameraQBuffer.length;
+        v4l2.CameraBuffer.index = Index;
+        std::cout << Index << " " << v4l2.CameraQBuffer.length << '\n';
+        if (v4l2d.V4L2OUT_TYPE == V4L2_MEMORY_USERPTR)
+            v4l2.CameraBuffer.m.userptr = (unsigned long)new uint8_t[v4l2.CameraQBuffer.length];
         V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_qbuf_error);
     }
 
-    memset(&v4l2.CameraBuffer, 0, sizeof(v4l2.CameraBuffer));
     v4l2.CameraBuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    v4l2.CameraBuffer.memory = V4L2_MEMORY_MMAP;
-    v4l2.CameraBuffer.index = 0;
     V4L2Log(ioctl(_flag_CameraFD, VIDIOC_STREAMON, &v4l2.CameraBuffer.type), _v4l2_vidioc_streamon_error);
 }
 
@@ -164,12 +168,24 @@ void V4L2Tools::V4L2Drive::V4L2Read(V4L2Tools::V4l2Data &Vdata)
         Vdata.bytesperline = v4l2.CameraFormat.fmt.pix.bytesperline;
         Vdata.size = v4l2.CameraBuffer.bytesused;
         Vdata.id = v4l2.CameraBuffer.index;
-        if (Vdata.ismapping)
-            Vdata.data = (uint8_t *)v4l2Buffers[v4l2.CameraBuffer.index];
-        else
-            std::copy((uint8_t *)v4l2Buffers[v4l2.CameraBuffer.index],
-                      (uint8_t *)v4l2Buffers[v4l2.CameraBuffer.index] + Vdata.size,
-                      Vdata.data);
+        if (v4l2d.V4L2OUT_TYPE == V4L2_MEMORY_MMAP)
+        {
+            if (Vdata.ismapping)
+                Vdata.data = (uint8_t *)v4l2Buffers[v4l2.CameraBuffer.index];
+            else
+                std::copy((uint8_t *)v4l2Buffers[v4l2.CameraBuffer.index],
+                          (uint8_t *)v4l2Buffers[v4l2.CameraBuffer.index] + Vdata.size,
+                          Vdata.data);
+        }
+        else if (v4l2d.V4L2OUT_TYPE == V4L2_MEMORY_USERPTR)
+        {
+            if (Vdata.ismapping)
+                Vdata.data = (uint8_t *)v4l2.CameraBuffer.m.userptr;
+            else
+                std::copy((uint8_t *)v4l2.CameraBuffer.m.userptr,
+                          (uint8_t *)v4l2.CameraBuffer.m.userptr + Vdata.size,
+                          Vdata.data);
+        }
         V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_camread_error);
     }
     else

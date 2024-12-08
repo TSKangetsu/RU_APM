@@ -131,6 +131,7 @@ V4L2Tools::V4L2Encoder::V4L2Encoder(std::string Device, V4l2Info Info)
             v4l2.CameraBuffer.memory = v4l2d.V4L2OUT_TYPE;
             v4l2.CameraBuffer.field = V4L2_FIELD_NONE;
             v4l2.CameraBuffer.length = isMPlaneSupported ? 1 : v4l2.CameraQBuffer.length;
+            v4l2.CameraBuffer.index = Index;
             //
             if (v4l2d.V4L2OUT_TYPE == V4L2_MEMORY_MMAP)
             {
@@ -145,8 +146,11 @@ V4L2Tools::V4L2Encoder::V4L2Encoder(std::string Device, V4l2Info Info)
                 V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_qbuf_error);
             }
             else if (v4l2d.V4L2OUT_TYPE == V4L2_MEMORY_USERPTR)
+            {
                 userBuffer = new uint8_t[v4l2.CameraQBuffer.length];
-            // userBuffer = malloc(v4l2.CameraQBuffer.length);
+                v4l2.CameraBuffer.m.userptr = (unsigned long)userBuffer;
+                V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_qbuf_error);
+            }
         }
 
         for (int Index = 0; Index < v4l2.CameraReqBufferOut.count; ++Index)
@@ -188,19 +192,18 @@ void V4L2Tools::V4L2Encoder::V4L2EncodeSet(V4L2Tools::V4l2Data &VdataIn, V4L2Too
 
     ioctl(_flag_CameraFD, VIDIOC_DQBUF, &v4l2.CameraBuffer);
 
-    // v4l2.CameraBuffer.m.userptr = (unsigned long)userBuffer;
-    // std::cout << (int)v4l2.CameraBuffer.bytesused << " " << VdataIn.size << "\n";
-    // std::copy(VdataIn.data,
-    //           VdataIn.data + VdataIn.size,
-    //           (unsigned char *)v4l2.CameraBuffer.m.userptr);
+    v4l2.CameraBuffer.m.userptr = (unsigned long)userBuffer;
+    std::copy(VdataIn.data,
+              VdataIn.data + VdataIn.size,
+              (unsigned char *)v4l2.CameraBuffer.m.userptr);
     //
     // ignore mapping type, alway copy in
     // if (VdataIn.ismapping)
     //     VdataIn.data = (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index];
     // else
-    std::copy(VdataIn.data,
-              VdataIn.data + VdataIn.size,
-              (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index]);
+    // std::copy(VdataIn.data,
+    //           VdataIn.data + VdataIn.size,
+    //           (unsigned char *)v4l2Buffers[v4l2.CameraBuffer.index]);
 
     if (isMPlaneSupported)
         v4l2.CameraBuffer.m.planes->length = VdataIn.maxsize;

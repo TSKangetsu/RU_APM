@@ -28,7 +28,7 @@ namespace V4L2Tools
         bool Is_AutoSize = false;
         unsigned int PixFormat = V4L2_PIX_FMT_BGR24;
         unsigned int PixFormatOut = V4L2_PIX_FMT_H264;
-        v4l2_memory V4L2OUT_TYPE = V4L2_MEMORY_MMAP;
+        v4l2_memory V4L2OUT_TYPE = V4L2_MEMORY_USERPTR;
         // H264 camera codec control
         int H264_PSize = 60;
         int H264_Profile = 0;
