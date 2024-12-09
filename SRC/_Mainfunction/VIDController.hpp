@@ -57,10 +57,10 @@ class VIDController_t
 public:
     VIDController_t();
     ~VIDController_t();
+    std::vector<std::unique_ptr<FlowThread>> VideoISThread;
 
 private:
     void VideoISLoader();
-    std::vector<std::unique_ptr<FlowThread>> VideoISThread;
     std::vector<std::unique_ptr<V4L2Tools::V4L2Drive>> V4L2Driver;
 };
 
@@ -84,6 +84,7 @@ VIDController_t::VIDController_t()
                             .FrameBuffer = MAXV4LBUF,
                             .Is_AutoSize = (SYSC::CameraConfig[i].DeviceWidth < 0),
                             .PixFormat = V4L2Format_s.at(SYSC::CameraConfig[i].DeviceIFormat),
+                            .V4L2OUT_TYPE = V4L2_MEMORY_MMAP,
                             .H264_PSize = SYSC::CommonConfig.COM_BroadCastPFrameSize,
                             .H264_Profile = V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE,
                             .H264_Bitrate = SYSC::CommonConfig.COM_BroadCastBitRate,

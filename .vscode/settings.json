@@ -1,6 +1,6 @@
 {
     "custom.user": "root",
-    "custom.ipaddress": "192.168.248.11",
+    "custom.ipaddress": "192.168.6.83",
     "custom.gdbserverPort": "9590",
     "custom.gdb": "aarch64-openwrt-linux-gdb",
     "custom.exe": "RuAPM_Cli",
@@ -14,8 +14,9 @@
         "-DFULLSTATIC=true",
         "-DOPENWRT=true",
         "-DMODULE_FFMPEG=false",
-        "-DMODULE_APM=true",
-        "-DMODULE_FECLIB=true",
-        "-DMAXBUFFER=1",
+        "-DMODULE_APM=false",
+        "-DMODULE_FECLIB=false",
+        "-DMAXBUFFER=3",
+        "-DDEBUGREC=true",
     ],
 }

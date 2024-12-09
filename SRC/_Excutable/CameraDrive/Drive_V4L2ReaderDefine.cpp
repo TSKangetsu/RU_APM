@@ -98,10 +98,9 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
     V4L2Log(ioctl(_flag_CameraFD, VIDIOC_REQBUFS, &v4l2.CameraReqBuffer), _v4l2_reqbuff_error);
     v4l2Buffers = (void **)calloc(v4l2.CameraReqBuffer.count, sizeof(*v4l2Buffers));
 
-    memset(&v4l2.CameraQBuffer, 0, sizeof(v4l2.CameraQBuffer));
     for (int Index = 0; Index < v4l2.CameraReqBuffer.count; ++Index)
     {
-
+        memset(&v4l2.CameraQBuffer, 0, sizeof(v4l2.CameraQBuffer));
         v4l2.CameraQBuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         v4l2.CameraQBuffer.memory = v4l2d.V4L2OUT_TYPE;
         v4l2.CameraQBuffer.index = Index;
@@ -132,7 +131,6 @@ V4L2Tools::V4L2Drive::V4L2Drive(std::string Device, V4l2Info Info)
         v4l2.CameraBuffer.field = V4L2_FIELD_NONE;
         v4l2.CameraBuffer.length = v4l2.CameraQBuffer.length;
         v4l2.CameraBuffer.index = Index;
-        std::cout << Index << " " << v4l2.CameraQBuffer.length << '\n';
         if (v4l2d.V4L2OUT_TYPE == V4L2_MEMORY_USERPTR)
             v4l2.CameraBuffer.m.userptr = (unsigned long)new uint8_t[v4l2.CameraQBuffer.length];
         V4L2Log(ioctl(_flag_CameraFD, VIDIOC_QBUF, &v4l2.CameraBuffer), _v4l2_qbuf_error);

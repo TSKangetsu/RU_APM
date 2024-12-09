@@ -42,7 +42,7 @@ namespace RuAPSSys
 #endif
 			// Step 3. Load up Camera System.
 			VIDController.reset(new VIDController_t());
-			
+
 			// Step 4. Load up Message and VideoStream BoradCast;
 			COMController.reset(new COMController_t());
 			// ...
@@ -96,6 +96,8 @@ RuAPSSys::SchedulerController &&RuAPSSys::SchedulerController::SystemMonitorReg(
 					LOG::LogPrintSTDIO(_SYS << SYSTEMEXITEDCAL);
 					exit(0);
 				}
+				// std::cout << "COM:" << COMController->BroadcastThread->RunClockHz << "\n";
+				// std::cout << "VID" << VIDController->VideoISThread[0]->RunClockHz << "\n";
 			},
 			FlowSytemMonHZ));
 	// Call Signal Handler

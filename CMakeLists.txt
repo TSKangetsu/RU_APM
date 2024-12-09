@@ -5,6 +5,7 @@ set(MODULE_FECLIB true  CACHE BOOL "enable module: Reed solomon forward error co
 set(FULLSTATIC false CACHE  INTERNAL bool)
 set(OPENWRT FALSE CACHE  INTERNAL bool)
 set(MAXBUFFER 5 CACHE  INTERNAL int)
+set(DEBUGREC false CACHE  INTERNAL bool)
 
 cmake_minimum_required(VERSION 3.13)
 set(CMAKE_CXX_STANDARD 17)
@@ -26,9 +27,15 @@ IF(FULLSTATIC)
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 ENDIF()
 
+IF(DEBUGREC)
+    add_compile_definitions(DEBUG_REC)
+ENDIF()
+
+
 IF(MAXBUFFER)
     add_compile_definitions(MAXV4LBUF=${MAXBUFFER})
 ENDIF()
+
 
 # add_definitions(-DNETDEBUG)
 add_compile_definitions(DEBUG)

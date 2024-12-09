@@ -43,8 +43,11 @@ class COMController_t
 public:
     COMController_t();
     ~COMController_t();
+    std::unique_ptr<FlowThread> BroadcastThread;
 
 private:
+    FILE *recorder;
+
     V4L2Tools::V4l2Data comInVdata;
     V4L2Tools::V4l2Data comInVdataOut;
     std::shared_ptr<uint8_t> InjectVTarget;
@@ -63,7 +66,7 @@ private:
     //
     std::unique_ptr<WIFICastDriver> Injector;
     std::unique_ptr<FlowThread> NormalThread;
-    std::unique_ptr<FlowThread> BroadcastThread;
+
     std::unique_ptr<FlowThread> RecvcastThread;
 #ifdef MODULE_FFMPEG
     std::queue<FFMPEGTools::AVData> EncoderQueue;
@@ -80,6 +83,9 @@ private:
 
 COMController_t::COMController_t()
 {
+#ifdef DEBUG_REC
+    recorder = fopen("/root/stream.h264", "wb");
+#endif
 #ifdef MODULE_FECLIB
     fec_init();
 #endif
@@ -145,6 +151,7 @@ COMController_t::COMController_t()
                                                          [SYSC::CommonConfig
                                                               .COM_CastFrameIndex]
                                                              .DeviceIFormat),
+                        .V4L2OUT_TYPE = V4L2_MEMORY_MMAP,
                         .H264_PSize = SYSC::CommonConfig.COM_BroadCastPFrameSize,
                         .H264_Profile = V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE,
                         .H264_Bitrate = SYSC::CommonConfig.COM_BroadCastBitRate,
@@ -226,7 +233,10 @@ COMController_t::COMController_t()
                                 if (comInVdataOut.size != 0 &&
                                     comInVdataOut.size != comInVdataOut.maxsize)
                                 {
-                                    VideoDataInject(comInVdataOut.data, comInVdataOut.size); 
+#ifdef DEBUG_REC
+                                    fwrite(comInVdataOut.data, 1, comInVdataOut.size, recorder);
+#endif
+                                    VideoDataInject(comInVdataOut.data, comInVdataOut.size);
                                 }
                                 comInVdataOut.size = 0;
 #endif
@@ -362,6 +372,10 @@ void COMController_t::COMBoradCastDataInject()
 
 COMController_t::~COMController_t()
 {
+#ifdef DEBUG_REC
+    fclose(recorder);
+#endif
+
     if (NormalThread != nullptr)
         NormalThread->FlowStopAndWait();
     if (BroadcastThread != nullptr)
