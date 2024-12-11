@@ -74,7 +74,7 @@ namespace V4L2Tools
 
                 this->data = new uint8_t[this->size];
 #ifdef DEBUG
-                std::cout << "\033[33m[V4L2Info] V4L2 alloc dataBuffer check:" << (int)data << "\n";
+                std::cout << "\033[33m[V4L2Info] V4L2 alloc dataBuffer check:" << std::hex << static_cast<void *>(data) << std::dec << "\n";
 #endif
             }
             else
@@ -142,9 +142,9 @@ namespace V4L2Tools
                 {
 #ifdef DEBUG
                     std::cout << "\033[33m[V4L2Info] V4L2 copying "
-                              << (int)(DataCpy.data) << " "
-                              << (int)ismapping
-                              << " " << (int)data << "\n";
+                              << std::hex << static_cast<void *>(DataCpy.data) << " "
+                              << ismapping
+                              << " " << static_cast<void *>(data) << std::dec << "\n";
 #endif
                     if (data != nullptr)
                     {

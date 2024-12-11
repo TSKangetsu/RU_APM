@@ -84,7 +84,7 @@ private:
 COMController_t::COMController_t()
 {
 #ifdef DEBUG_REC
-    recorder = fopen("/root/stream.h264", "wb");
+    recorder = fopen("./stream.h264", "wb");
 #endif
 #ifdef MODULE_FECLIB
     fec_init();
@@ -213,6 +213,9 @@ COMController_t::COMController_t()
                                         [SYSC::CommonConfig.COM_CastFrameIndex])
                                         .DeviceIFormat == "H265")
                             {
+#ifdef DEBUG_REC
+                                fwrite(comInVdata.data, 1, comInVdata.size, recorder);
+#endif
                                 VideoDataInject(comInVdata.data, comInVdata.size);
                             }
                             else
